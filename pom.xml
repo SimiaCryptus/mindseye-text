@@ -141,18 +141,6 @@
             <classifier>linux-x86_64</classifier>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.bytedeco</groupId>
-            <artifactId>javacpp</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.bytedeco.javacpp-presets</groupId>
-            <artifactId>hdf5-platform</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.bytedeco.javacpp-presets</groupId>
-            <artifactId>hdf5</artifactId>
-        </dependency>
     </dependencies>
 
 </project>

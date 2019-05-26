@@ -21,18 +21,10 @@ package com.simiacryptus.text.gpt2;
 
 import com.simiacryptus.mindseye.test.NotebookReportBase;
 import org.junit.Test;
-import org.tensorflow.framework.GraphDef;
 
 import javax.annotation.Nonnull;
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.UUID;
 
-public class UserTests extends NotebookReportBase {
+public class TextGenerationDemo extends NotebookReportBase {
   @Nonnull
   @Override
   public ReportType getReportType() {
@@ -43,9 +35,6 @@ public class UserTests extends NotebookReportBase {
   protected Class<?> getTargetClass() {
     return GPT2Model.class;
   }
-
-
-
 
   @Test
   public void generateUnconditionalText() {
