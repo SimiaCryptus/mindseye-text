@@ -258,14 +258,5 @@
     <orderEntry type="library" name="Maven: org.apache.commons:commons-lang3:3.8.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.jcuda:jcudnn-natives:linux-x86_64:10.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.jcuda:jcuda-natives:linux-x86_64:10.0.0" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco:javacpp:1.4.4" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco.javacpp-presets:hdf5-platform:1.10.4-1.4.4" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco.javacpp-presets:hdf5:linux-x86:1.10.4-1.4.4" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco.javacpp-presets:hdf5:linux-x86_64:1.10.4-1.4.4" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco.javacpp-presets:hdf5:linux-ppc64le:1.10.4-1.4.4" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco.javacpp-presets:hdf5:macosx-x86_64:1.10.4-1.4.4" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco.javacpp-presets:hdf5:windows-x86:1.10.4-1.4.4" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco.javacpp-presets:hdf5:windows-x86_64:1.10.4-1.4.4" level="project" />
-    <orderEntry type="library" name="Maven: org.bytedeco.javacpp-presets:hdf5:1.10.4-1.4.4" level="project" />
   </component>
 </module>
