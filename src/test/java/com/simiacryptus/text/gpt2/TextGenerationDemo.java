@@ -94,20 +94,26 @@ public class TextGenerationDemo extends NotebookReportBase {
                 "\\w\\s\\.\\;\\,\\'\\\"\\-\\(\\)\\d\\n",
                 new URI("http://www.mit.edu/~ecprice/wordlist.10000")
             ),
-            Arrays.copyOf(seeds_fables, 4)
+            Arrays.copyOf(seeds_fables, 2)
         );
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
+      textGenerator.setModel(new TemperatureWrapper(1.5, textGenerator.getModel()));
+      textGenerator.setModel(new MinEntropyWrapper(5e-1, textGenerator.getModel()));
       textGenerator.feed("\n");
       for (int i = 0; i < articles; i++) {
         TextGenerator copy = textGenerator.copy();
-        String headline = copy.generate(s -> s.length() < 10 || !s.endsWith("\n")).replace('\n', ' ').trim();
-        log.h1(headline);
-        log.p(headline + " " + IntStream.range(0, 15)
-            .mapToObj(j -> copy.generate(s -> s.length() < 32 || (s.length() < 500 && !s.endsWith(".") && !s.contains(". ") && !s.contains("\n"))))
-            .map(x -> x.replace('\n', ' ').trim())
-            .reduce((a, b) -> a + " " + b).orElse(""));
+        try {
+          String headline = copy.generate(s -> s.length() < 10 || !s.endsWith("\n")).replace('\n', ' ').trim();
+          log.h1(headline);
+          log.p(headline + " " + IntStream.range(0, 15)
+              .mapToObj(j -> copy.generate(s -> s.length() < 32 || (s.length() < 500 && !s.endsWith(".") && !s.contains(". ") && !s.contains("\n"))))
+              .map(x -> x.replace('\n', ' ').trim())
+              .reduce((a, b) -> a + " " + b).orElse(""));
+        } catch (Throwable e) {
+          logger.warn("Err", e);
+        }
       }
     });
   }
@@ -145,19 +151,25 @@ public class TextGenerationDemo extends NotebookReportBase {
 
 
   @Test
-  public void generateCommentary() throws NoSuchAlgorithmException, IOException, KeyManagementException, URISyntaxException {
+  public void generateCommentary() throws NoSuchAlgorithmException, IOException, KeyManagementException {
     TextGenerator textGenerator = GPT2Util.getTextGenerator(
-        "a-zA-Z01-9 ,;:\\-\\.\\!\\?",
-        new URI("http://www.mit.edu/~ecprice/wordlist.10000")
+        "",
+//        "a-zA-Z01-9 ,;:\\-\\.\\!\\?",
+        null
+//        new URI("http://www.mit.edu/~ecprice/wordlist.10000")
     );
 //    String url = "https://en.wikipedia.org/wiki/Special:Random";
     String url = "https://en.wikinews.org/wiki/Special:Random";
     String text = Jsoup.connect(url).followRedirects(true).get().select("p").text();
+//    String text = ("");
+    String sentancePattern = "([^\\.]{8,}\\.)";
+//    String sentancePattern = "([^\n]{6,}\n)";
+    Pattern pattern = Pattern.compile(sentancePattern);
     run(log -> {
       log.h2("Raw Text");
       log.p(text);
       log.h2("Sentence Analysis");
-      Matcher matcher = Pattern.compile("([^\\.]{8,}\\.)").matcher(text);
+      Matcher matcher = pattern.matcher(text);
       try {
         while (matcher.find()) {
           String line = matcher.group(1).trim();
