@@ -86,6 +86,8 @@ public class TextClassificationDemo extends NotebookReportBase {
 
   @Test
   public void buildIndex() throws IOException {
+    File indexFile = new File(base, "index.csv");
+    int currentlyIndexed = indexFile.exists()?FileUtils.readLines(indexFile, "UTF-8").size():0;
     File file = new File(base, "train_use.csv");
     List<String[]> rows = Arrays.stream(FileUtils.readFileToString(file, "UTF-8").split("\n"))
         .map(s -> s.split(",", 3))
@@ -93,7 +95,7 @@ public class TextClassificationDemo extends NotebookReportBase {
         .collect(Collectors.toList());
     @NotNull Function<String, Future<Tensor>> languageTransform = getLanguageTransform(1);
     int batchSize = 10;
-    for (int startRow = 1; startRow < rows.size(); startRow += batchSize) {
+    for (int startRow = 1+currentlyIndexed; startRow < rows.size(); startRow += batchSize) {
       logger.info("Processing rows from " + startRow);
       List<String[]> subList = rows.subList(startRow, Math.min(rows.size(), startRow + batchSize));
       TimedResult<Void> time = TimedResult.time(() -> {
@@ -112,7 +114,7 @@ public class TextClassificationDemo extends NotebookReportBase {
         CharSequence data = dataTable.stream()
             .map(s -> s.stream().reduce((a, b) -> a + "," + b).orElse(""))
             .reduce((a, b) -> a + "\n" + b).orElse("");
-        FileUtils.write(new File(base, "index.csv"), data, "UTF-8", true);
+        FileUtils.write(indexFile, data, "UTF-8", true);
       });
       logger.info("Wrote in " + time.seconds());
       System.gc();
