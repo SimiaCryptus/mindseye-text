@@ -14,3 +14,4 @@ encoder_345M.json
 !/.mvn/wrapper/maven-wrapper.jar
 reports/
 *.log
+*.pb
