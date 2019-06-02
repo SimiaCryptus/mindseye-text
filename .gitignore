@@ -13,3 +13,4 @@ encoder_345M.json
 # Avoid ignoring Maven wrapper jar file (.jar files are usually ignored)
 !/.mvn/wrapper/maven-wrapper.jar
 reports/
+*.log

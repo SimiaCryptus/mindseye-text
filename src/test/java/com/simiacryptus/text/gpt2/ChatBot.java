@@ -37,17 +37,17 @@ import java.util.function.BiFunction;
 public class ChatBot {
   protected static final Logger logger = LoggerFactory.getLogger(ChatBot.class);
   private final TextGenerator root;
-  private final String characterWhitelist = "";
+  private final String characterWhitelist = "a-zA-Z01-9,.'\"\\!\\@\\$\\&\\*\\(\\)\\#\\-\\=\\+/";
   private TextGenerator textGenerator;
-  private String wordlist = "http://www.mit.edu/~ecprice/wordlist.10000";
+  private String wordlist = ""; //"http://www.mit.edu/~ecprice/wordlist.10000";
   private double temperature = 1.0;
   private double minEntropy = 1e-1;
   private String[] seeds = new String[]{""};
   private boolean verbose = false;
   private int choicesToLog = 5;
   private int maxLength = 64;
-  private String prefix = "\n";
-  private String suffix = "\n";
+  private String prefix = "";
+  private String suffix = "";
 
   public ChatBot() throws URISyntaxException, KeyManagementException, NoSuchAlgorithmException, IOException {
     this.root = GPT2Util.getTextGenerator();
