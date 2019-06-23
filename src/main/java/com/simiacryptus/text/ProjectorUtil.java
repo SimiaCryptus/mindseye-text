@@ -17,7 +17,7 @@
  * under the License.
  */
 
-package com.simiacryptus.text.gpt2;
+package com.simiacryptus.text;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;

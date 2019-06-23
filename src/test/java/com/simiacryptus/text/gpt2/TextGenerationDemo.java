@@ -20,6 +20,9 @@
 package com.simiacryptus.text.gpt2;
 
 import com.simiacryptus.mindseye.test.NotebookReportBase;
+import com.simiacryptus.text.MinEntropyWrapper;
+import com.simiacryptus.text.TemperatureWrapper;
+import com.simiacryptus.text.TextGenerator;
 import org.apache.commons.io.IOUtils;
 import org.jsoup.Jsoup;
 import org.junit.Test;
@@ -179,7 +182,7 @@ public class TextGenerationDemo extends NotebookReportBase {
           for (int i = 0; i < 5; i++) {
             TextGenerator copy = textGenerator.copy();
             String generate = copy.generate(s -> !s.endsWith("."));
-            copy.getModel().resetState();
+            copy.getModel().clear();
             log.p(generate);
           }
         }
@@ -207,7 +210,7 @@ public class TextGenerationDemo extends NotebookReportBase {
             TextGenerator copy = textGenerator.copy();
             copy.feed("        // ");
             String generate = copy.generate(s -> s.length() < 8 || (!s.endsWith("\n") && s.length() < 128));
-            copy.getModel().resetState();
+            copy.getModel().clear();
             log.p(generate);
           }
           textGenerator.feed("\n");
