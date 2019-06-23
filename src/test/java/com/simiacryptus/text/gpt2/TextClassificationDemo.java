@@ -20,19 +20,22 @@
 package com.simiacryptus.text.gpt2;
 
 import com.simiacryptus.lang.TimedResult;
+import com.simiacryptus.lang.Tuple2;
 import com.simiacryptus.mindseye.eval.ArrayTrainable;
 import com.simiacryptus.mindseye.lang.Coordinate;
 import com.simiacryptus.mindseye.lang.Layer;
 import com.simiacryptus.mindseye.lang.SerialPrecision;
 import com.simiacryptus.mindseye.lang.Tensor;
-import com.simiacryptus.mindseye.lang.tensorflow.TFIO;
-import com.simiacryptus.mindseye.layers.java.*;
-import com.simiacryptus.mindseye.network.DAGNode;
+import com.simiacryptus.mindseye.layers.java.EntropyLossLayer;
+import com.simiacryptus.mindseye.layers.java.LinearActivationLayer;
+import com.simiacryptus.mindseye.layers.java.SoftmaxLayer;
 import com.simiacryptus.mindseye.network.PipelineNetwork;
 import com.simiacryptus.mindseye.network.SimpleLossNetwork;
 import com.simiacryptus.mindseye.opt.IterativeTrainer;
 import com.simiacryptus.mindseye.test.NotebookReportBase;
-import com.simiacryptus.mindseye.test.TestUtil;
+import com.simiacryptus.text.ClassifyUtil;
+import com.simiacryptus.text.ProjectorUtil;
+import com.simiacryptus.text.TensorStats;
 import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -42,8 +45,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -53,8 +54,24 @@ import java.util.zip.ZipFile;
 
 public class TextClassificationDemo extends NotebookReportBase {
 
+  public static final File base = new File("C:\\Users\\andre\\Downloads\\twitter-sentiment-analysis2");
   private final int[] featureDims = {1, 24, 2, 16, 1, 64};
-  private final File base = new File("C:\\Users\\andre\\Downloads\\twitter-sentiment-analysis2");
+
+  public static Coordinate[] mostSignifigantClassifierPins(List<String[]> rows, int primaryKey, int secondaryKey, int maxDims, int[] featureDims) {
+    Map<Integer, Map<Integer, Tensor>> indexedData = toTensorMap(rows, featureDims);
+    Map<Integer, TensorStats> statsMap = ClassifyUtil.mapValues(indexedData, entry -> TensorStats.create(entry.values()));
+    return ClassifyUtil.mostSignifigantCoords(statsMap.get(primaryKey), statsMap.get(secondaryKey), maxDims);
+  }
+
+  public static Map<Integer, Map<Integer, Tensor>> toTensorMap(List<String[]> rows, int[] featureDims) {
+    return rows.stream().collect(Collectors.groupingBy((String[] row) -> {
+      return Integer.parseInt(row[0]);
+    }, Collectors.toMap((String[] row) -> {
+      return Integer.parseInt(row[1]);
+    }, (String[] row) -> {
+      return new Tensor(SerialPrecision.Float.parse(row[2]), featureDims);
+    })));
+  }
 
   @Nonnull
   @Override
@@ -87,15 +104,14 @@ public class TextClassificationDemo extends NotebookReportBase {
   @Test
   public void buildIndex() throws IOException {
     File indexFile = new File(base, "index.csv");
-    int currentlyIndexed = indexFile.exists()?FileUtils.readLines(indexFile, "UTF-8").size():0;
+    int currentlyIndexed = indexFile.exists() ? FileUtils.readLines(indexFile, "UTF-8").size() : 0;
     File file = new File(base, "train_use.csv");
     List<String[]> rows = Arrays.stream(FileUtils.readFileToString(file, "UTF-8").split("\n"))
         .map(s -> s.split(",", 3))
-        //.limit(10)
         .collect(Collectors.toList());
-    @NotNull Function<String, Future<Tensor>> languageTransform = getLanguageTransform(1);
+    @NotNull Function<String, Future<Tensor>> languageTransform = ClassifyUtil.getLanguageTransform(1);
     int batchSize = 10;
-    for (int startRow = 1+currentlyIndexed; startRow < rows.size(); startRow += batchSize) {
+    for (int startRow = 1 + currentlyIndexed; startRow < rows.size(); startRow += batchSize) {
       logger.info("Processing rows from " + startRow);
       List<String[]> subList = rows.subList(startRow, Math.min(rows.size(), startRow + batchSize));
       TimedResult<Void> time = TimedResult.time(() -> {
@@ -122,76 +138,30 @@ public class TextClassificationDemo extends NotebookReportBase {
 
   }
 
-  @NotNull
-  protected Function<String, Future<Tensor>> getLanguageTransform(int threads) {
-    ExecutorService pool = Executors.newFixedThreadPool(threads);
-    ThreadLocal<GPT2Model> gpt2ModelThreadLocal = new ThreadLocal<GPT2Model>() {
-      @Override
-      protected GPT2Model initialValue() {
-        return GPT2Util.getModel_345M();
-      }
-    };
-    ThreadLocal<GPT2Codec> gpt2CodecThreadLocal = new ThreadLocal<GPT2Codec>() {
-      @Override
-      protected GPT2Codec initialValue() {
-        return GPT2Util.getCodec_345M();
-      }
-    };
-    return (String row) -> pool.submit(() -> {
-      GPT2Model gpt2 = gpt2ModelThreadLocal.get();
-      GPT2Codec codec = gpt2CodecThreadLocal.get();
-      LanguageCodeModel copy = gpt2.copy();
-      double[] entropies = codec.encode(row).stream().mapToDouble(code -> {
-        float[] prediction = copy.eval(code);
-        return IntStream.range(0, prediction.length).mapToDouble(i -> prediction[i])
-            .map(x -> x * Math.log(x)).sum() / Math.log(2);
-      }).toArray();
-      Tensor state = TFIO.getTensor(copy.state());
-      int slice = state.getDimensions()[4] - 1;
-      return new Tensor(1, 24, 2, 16, 1, 64).setByCoord(c -> {
-        int[] coords = c.getCoords();
-        coords[4] = slice;
-        return state.get(coords);
-      });
-    });
-  }
-
   @Test
   public void projector() throws IOException, URISyntaxException {
     List<String[]> rows = loadIndexFile();
-    Map<String, Tensor> tensorMap = rows.stream().collect(Collectors.toMap(r -> r[3], r -> new Tensor(SerialPrecision.Float.parse(r[2]), featureDims)));
 
-    List<Tensor> values = new ArrayList<>(tensorMap.values());
-    Tensor avg = TestUtil.avg(values);
-    logger.debug("Avg: " + avg.prettyPrint());
-    BiasLayer biasLayer = new BiasLayer(avg.getDimensions()).set(avg.scaleInPlace(-1));
-    Tensor scales = TestUtil.sum(
-        PipelineNetwork.wrap(1,
-            biasLayer.addRef(),
-            new NthPowerActivationLayer().setPower(2)).map(values)
-    )
-        .scaleInPlace(1.0 / values.size())
-        .mapAndFree(v -> Math.pow(v, 0.5));
-    logger.debug("Scale: " + scales.prettyPrint());
+    Function<Tensor, Tensor> tensorFunction;
+    {
+      Coordinate[] coords = mostSignifigantClassifierPins(rows, 0, 1, 100, featureDims);
+      tensorFunction = Tensor.select(coords);
+    }
 
-    List<Coordinate> coordList = scales.coordStream(true).sorted(Comparator.comparing(c -> -scales.get(c))).limit(50).collect(Collectors.toList());
-    Map<String, Tensor> vectors = tensorMap.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), e -> {
-      Tensor fullSignal = e.getValue();
-      return new Tensor(coordList.size()).setByCoord(c2 -> fullSignal.get(coordList.get(c2.getIndex())));
-    }));
-
-    ProjectorUtil.browseProjector(ProjectorUtil.publishProjector(vectors));
+    Map<String, Tensor> tensorMap = rows.stream().collect(Collectors.toMap(r -> r[3], r -> tensorFunction.apply(new Tensor(SerialPrecision.Float.parse(r[2]), featureDims))));
+    ProjectorUtil.browseProjector(ProjectorUtil.publishProjector(tensorMap));
   }
 
   @Test
   public void trainModel() throws IOException {
     List<String[]> rows = loadIndexFile();
-    Map<Integer, Map<Integer, Tensor>> indexedData = toTensorMap(rows);
-    PipelineNetwork classfier = classifierBase(indexedData);
+    Map<Integer, Map<Integer, Tensor>> indexedData = toTensorMap(rows, featureDims);
+    Tuple2<PipelineNetwork, Function<Tensor, Tensor>> tuple2 = ClassifyUtil.buildClassifier(ClassifyUtil.mapValues(indexedData, entry -> new ArrayList<>(entry.values())));
+    PipelineNetwork classfier = tuple2._1;
     List<Tensor[]> indexData = rows.stream().map(e -> {
       return new Tensor[]{
           new Tensor(2).set(Integer.parseInt(e[0]), 1),
-          new Tensor(SerialPrecision.Float.parse(e[2]), featureDims)
+          tuple2._2.apply(new Tensor(SerialPrecision.Float.parse(e[2]), featureDims))
       };
     }).collect(Collectors.toList());
     classfier.wrap(pretrain(classfier, indexData));
@@ -200,7 +170,7 @@ public class TextClassificationDemo extends NotebookReportBase {
         indexData.get(i)[1],
         indexData.get(i)[0]
     }).toArray(i -> new Tensor[i][]);
-    double trainingResult = IterativeTrainer.wrap(new ArrayTrainable(trainingData, new SimpleLossNetwork(classfier, new EntropyLossLayer())))
+    double trainingResult = IterativeTrainer.wrap(new ArrayTrainable(trainingData, new SimpleLossNetwork(classfier, new EntropyLossLayer()), 1000))
         .setMaxIterations(100)
         .setTimeout(5, TimeUnit.MINUTES)
         .runAndFree();
@@ -211,13 +181,12 @@ public class TextClassificationDemo extends NotebookReportBase {
   @Test
   public void testModel() throws IOException {
     Layer classifier = Layer.fromZip(new ZipFile(new File(base, "model.zip")));
-
     File file = new File(base, "holdout.csv");
     List<String[]> rows = Arrays.stream(FileUtils.readFileToString(file, "UTF-8").split("\n"))
         .map(s -> s.split(",", 3))
         //.limit(10)
         .collect(Collectors.toList());
-    @NotNull Function<String, Future<Tensor>> languageTransform = getLanguageTransform(1);
+    @NotNull Function<String, Future<Tensor>> languageTransform = ClassifyUtil.getLanguageTransform(1);
     int batchSize = 10;
     for (int startRow = 1; startRow < rows.size(); startRow += batchSize) {
       logger.info("Processing rows from " + startRow);
@@ -274,48 +243,9 @@ public class TextClassificationDemo extends NotebookReportBase {
     return activationLayer;
   }
 
-  @NotNull
-  protected PipelineNetwork classifierBase(Map<Integer, Map<Integer, Tensor>> indexedData) {
-    Map<Integer, PipelineNetwork> networks = indexedData.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), entry -> {
-      Map<Integer, Tensor> group = entry.getValue();
-      List<Tensor> values = new ArrayList<>(group.values());
-      Tensor avg = TestUtil.avg(values);
-      BiasLayer biasLayer = new BiasLayer(avg.getDimensions()).set(avg.scaleInPlace(-1));
-      Tensor scales = TestUtil.sum(PipelineNetwork.wrap(1, biasLayer.addRef(), new NthPowerActivationLayer().setPower(2)).map(values));
-      Tensor scaleConst = scales
-          .scaleInPlace(1.0 / values.size())
-          .mapAndFree(v -> Math.pow(v, -0.5));
-      PipelineNetwork net = new PipelineNetwork(1);
-      net.wrap(new ProductInputsLayer(), net.wrap(biasLayer,
-          net.wrap(new AssertDimensionsLayer(1, 24, 2, 16, 1, 64), net.getInput(0))
-      ), net.constValue(scaleConst));
-      net.wrap(new NthPowerActivationLayer().setPower(2));
-      net.wrap(new SumReducerLayer());
-      net.wrap(new NthPowerActivationLayer().setPower(0.5));
-      return net;
-    }));
-
-    PipelineNetwork classfier = new PipelineNetwork(1);
-    DAGNode input = classfier.wrap(new AssertDimensionsLayer(1, 24, 2, 16, 1, 64), classfier.getInput(0)); //classfier.getInput(0);
-    classfier.wrap(new TensorConcatLayer(),
-        classfier.add(networks.get(0), input),
-        classfier.add(networks.get(1), input));
-    return classfier;
-  }
-
-  protected Map<Integer, Map<Integer, Tensor>> toTensorMap(List<String[]> rows) {
-    return rows.stream().collect(Collectors.groupingBy((String[] row) -> {
-      return Integer.parseInt(row[0]);
-    }, Collectors.toMap((String[] row) -> {
-      return Integer.parseInt(row[1]);
-    }, (String[] row) -> {
-      return new Tensor(SerialPrecision.Float.parse(row[2]), featureDims);
-    })));
-  }
-
   protected List<String[]> loadIndexFile() throws IOException {
     File file = new File(base, "index.csv");
-    return Arrays.stream(FileUtils.readFileToString(file, "UTF-8").split("\n"))
+    return FileUtils.readLines(file, "UTF-8").stream()
         .map(s -> s.split(",", 4)).collect(Collectors.toList());
   }
 

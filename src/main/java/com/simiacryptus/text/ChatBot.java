@@ -17,8 +17,9 @@
  * under the License.
  */
 
-package com.simiacryptus.text.gpt2;
+package com.simiacryptus.text;
 
+import com.simiacryptus.text.gpt2.GPT2Util;
 import com.simiacryptus.util.test.SysOutInterceptor;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
