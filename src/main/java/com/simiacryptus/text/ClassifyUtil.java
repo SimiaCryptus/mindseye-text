@@ -19,6 +19,7 @@
 
 package com.simiacryptus.text;
 
+import com.simiacryptus.lang.SerializableFunction;
 import com.simiacryptus.lang.Tuple2;
 import com.simiacryptus.mindseye.lang.Coordinate;
 import com.simiacryptus.mindseye.lang.Tensor;
@@ -85,8 +86,8 @@ public class ClassifyUtil {
   }
 
   @NotNull
-  public static Tuple2<PipelineNetwork, Function<Tensor, Tensor>> buildClassifier(Map<Integer, ArrayList<Tensor>> collect) {
-    Map<Integer, TensorStats> statsMap = mapValues(collect, entry -> TensorStats.create(entry));
+  public static Tuple2<PipelineNetwork, SerializableFunction<Tensor, Tensor>> buildClassifier(Map<? extends Integer, ? extends Collection<? extends Tensor>> collect) {
+    Map<? extends Integer, ? extends TensorStats> statsMap = mapValues(collect, entry -> TensorStats.create(entry));
     statsMap.values().forEach(tensorStats -> {
       logger.debug("Averages Histogram: " + JsonUtil.toJson(getHistogramList(tensorStats.avg.getData(), 10, 10)));
       logger.debug("Scales Histogram: " + JsonUtil.toJson(getHistogramList(tensorStats.scale.getData(), 10, 10)));
@@ -96,8 +97,8 @@ public class ClassifyUtil {
     int maxDims = 1000;
     int[] dimensions = statsMap.get(primaryKey).scale.getDimensions();
     if (Tensor.length(dimensions) > maxDims) {
-      Function<Tensor, Tensor> tensorFunction = Tensor.select(mostSignifigantCoords(statsMap.get(primaryKey), statsMap.get(secondaryKey), maxDims));
-      Tuple2<PipelineNetwork, Function<Tensor, Tensor>> subClassifier = buildClassifier(mapValues(collect, values ->
+      SerializableFunction<Tensor, Tensor> tensorFunction = Tensor.select(mostSignifigantCoords(statsMap.get(primaryKey), statsMap.get(secondaryKey), maxDims));
+      Tuple2<PipelineNetwork, SerializableFunction<Tensor, Tensor>> subClassifier = buildClassifier(mapValues(collect, values ->
           new ArrayList<>(values.stream().map(tensorFunction).collect(Collectors.toList()))));
       return new Tuple2<>(subClassifier._1, x -> subClassifier._2.apply(tensorFunction.apply(x)));
     } else {
@@ -106,7 +107,7 @@ public class ClassifyUtil {
   }
 
   @NotNull
-  public static PipelineNetwork buildClassifierFromStats(Map<Integer, TensorStats> statsMap) {
+  public static PipelineNetwork buildClassifierFromStats(Map<? extends Integer, ? extends TensorStats> statsMap) {
     int[] dimensions = statsMap.values().stream().findAny().get().avg.getDimensions();
     Map<Integer, PipelineNetwork> networks = statsMap.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), entry -> {
       TensorStats tensorStats = entry.getValue();

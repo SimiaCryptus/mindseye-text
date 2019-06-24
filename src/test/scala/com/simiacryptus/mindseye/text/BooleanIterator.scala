@@ -19,27 +19,31 @@
 
 package com.simiacryptus.mindseye.text
 
-import java.util.UUID
+import java.net.InetAddress
 import java.util.concurrent.TimeUnit
+import java.util.{UUID, function}
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.simiacryptus.aws.exe.EC2NodeSettings
+import com.simiacryptus.lang.SerializableFunction
 import com.simiacryptus.mindseye.art._
 import com.simiacryptus.mindseye.art.util.ArtUtil._
 import com.simiacryptus.mindseye.art.util._
 import com.simiacryptus.mindseye.eval.ArrayTrainable
 import com.simiacryptus.mindseye.lang.cudnn.Precision
-import com.simiacryptus.mindseye.lang.{Layer, SerialPrecision, Tensor}
+import com.simiacryptus.mindseye.lang.{SerialPrecision, Tensor}
 import com.simiacryptus.mindseye.layers.cudnn.BandAvgReducerLayer
 import com.simiacryptus.mindseye.layers.java._
 import com.simiacryptus.mindseye.network.{PipelineNetwork, SimpleLossNetwork}
 import com.simiacryptus.mindseye.opt.IterativeTrainer
 import com.simiacryptus.mindseye.opt.line.ArmijoWolfeSearch
 import com.simiacryptus.mindseye.opt.orient.OwlQn
-import com.simiacryptus.mindseye.text.BooleanIterator.dim
+import com.simiacryptus.mindseye.text.BooleanIterator.{dim, featureDims}
 import com.simiacryptus.notebook.{FormQuery, MarkdownNotebookOutput, NotebookOutput}
-import com.simiacryptus.sparkbook.NotebookRunner
 import com.simiacryptus.sparkbook.util.Java8Util._
 import com.simiacryptus.sparkbook.util.LocalRunner
+import com.simiacryptus.sparkbook.{AWSNotebookRunner, EC2Runner, NotebookRunner}
+import com.simiacryptus.text.ClassifyUtil
 import org.apache.spark.sql._
 import org.apache.spark.sql.types._
 
@@ -47,9 +51,40 @@ import scala.collection.JavaConversions._
 import scala.collection.mutable.ArrayBuffer
 import scala.util.{Random, Try}
 
+object TextClassifyUtil {
+  def getSampleEntropy(classifierNetwork: PipelineNetwork, dimensionSelectionFunction: function.Function[Tensor, Tensor], row: Row): Double = {
+    val tensor = new Tensor(SerialPrecision.Float.parse(row.getAs[String]("tensorSrc")), featureDims: _*)
+    val result = classifierNetwork.eval(dimensionSelectionFunction.apply(tensor)).getDataAndFree.getAndFree(0)
+    val v = result.get(0)
+    tensor.freeRef()
+    result.freeRef()
+    -v
+  }
+}
+import TextClassifyUtil._
+object BooleanIterator_EC2 extends BooleanIterator with EC2Runner[Object] with AWSNotebookRunner[Object] {
+
+  override def urlBase: String = String.format("http://%s:1080/etc/", InetAddress.getLocalHost.getHostAddress)
+
+  override def inputTimeoutSeconds = 600
+
+  override def maxHeap = Option("55g")
+
+  override def nodeSettings = EC2NodeSettings.P2_XL
+
+  override def javaProperties: Map[String, String] = Map(
+    "spark.master" -> spark_master
+  )
+
+  override def spark_master = "local[1]"
+
+}
 
 object BooleanIterator_Local extends BooleanIterator with LocalRunner[Object] with NotebookRunner[Object] {
   override val urlBase: String = "http://localhost:1080/etc/"
+
+
+  override def http_port: Int = 1081
 
   override def inputTimeoutSeconds = 30
 
@@ -147,37 +182,13 @@ abstract class BooleanIterator extends ArtSetup[Object] with BasicOptimizer {
     val positiveExamples = new ArrayBuffer[Row]()
     val negativeExamples = new ArrayBuffer[Row]()
 
-    def avoid = positiveExamples.union(negativeExamples).map(_.getAs[String]("file")).distinct.toArray
-
-    //index.groupBy("layer", "resolution").agg(count(index("file")).as("count")).foreach(row => println(row.toString))
-
     require(!index.isEmpty)
-    val meanSignalPreview: Tensor = stats(index.limit(100))
-    val innerClassifier = PipelineNetwork.wrap(1,
-      new LinearActivationLayer().setScale(1e-2 * Math.pow(meanSignalPreview.rms(), -1)).freeze(),
-      new FullyConnectedLayer(Array(1, 1, dim), Array(hiddenLayer1)),
-      new BiasLayer(hiddenLayer1),
-      //      new ReLuActivationLayer(),
-      new SigmoidActivationLayer(),
-      new DropoutNoiseLayer(dropoutFactor),
-      new FullyConnectedLayer(Array(hiddenLayer1), Array(2)),
-      new BiasLayer(2),
-      new SoftmaxLayer()
-    )
-    var classifier: Layer = innerClassifier
-    classifier = new StochasticSamplingSubnetLayer(classifier, dropoutSamples)
-    val selfEntropyNet = new PipelineNetwork(1)
-    selfEntropyNet.wrap(classifier)
-    selfEntropyNet.wrap(new EntropyLossLayer(), selfEntropyNet.getHead, selfEntropyNet.getHead)
+    var classifierNetwork: PipelineNetwork = null
+    var dimensionSelectionFunction: SerializableFunction[Tensor, Tensor] = null
 
     def bestSamples(sample: Int) = sparkSession.createDataFrame(sparkSession.sparkContext.parallelize(index.rdd.sortBy(row => {
-      val tensor = new Tensor(SerialPrecision.Float.parse(row.getAs[String]("tensorSrc")), featureDims: _*)
-      val result = selfEntropyNet.eval(tensor).getDataAndFree.getAndFree(0)
-      val v = result.get(0)
-      tensor.freeRef()
-      result.freeRef()
-      -v
-    }).take(sample)), index.schema)
+      getSampleEntropy(classifierNetwork, dimensionSelectionFunction, row)
+    }).take(sample).toList), index.schema)
 
     def newConfirmationBatch(index: DataFrame, sample: Int, log: NotebookOutput) = {
       val text = index.select("id", "text").distinct().collect().map(r => r.getInt(0) -> r.getString(1)).toMap
@@ -205,45 +216,39 @@ abstract class BooleanIterator extends ArtSetup[Object] with BasicOptimizer {
 
     def trainEpoch(log: NotebookOutput) = {
       withTrainingMonitor(monitor => {
-        classifier.asInstanceOf[StochasticSamplingSubnetLayer].clearNoise
-        log.eval(() => {
-          val search = new ArmijoWolfeSearch
-          IterativeTrainer.wrap(new ArrayTrainable((positiveExamples.map(x => Array(
-            new Tensor(SerialPrecision.Float.parse(x.getAs[String]("tensorSrc")), 1, 1, dim),
-            new Tensor(Array(1.0, 0.0), 1, 1, 2)
-          )).toList ++ negativeExamples.map(x => Array(
-            new Tensor(SerialPrecision.Float.parse(x.getAs[String]("tensorSrc")), 1, 1, dim),
-            new Tensor(Array(0.0, 1.0), 1, 1, 2)
-          )).toList).toArray, new SimpleLossNetwork(classifier, new EntropyLossLayer())))
-            .setMaxIterations(100)
-            .setIterationsPerSample(5)
-            .setLineSearchFactory((n: CharSequence) => search)
-            .setOrientation(new OwlQn())
-            .setMonitor(monitor)
-            .runAndFree().toString
-        })
-        classifier.asInstanceOf[StochasticSamplingSubnetLayer].clearNoise
+
+        import scala.collection.JavaConverters._
+
+        val classifierTuple = ClassifyUtil.buildClassifier(Map(
+          0.asInstanceOf[Integer] -> negativeExamples.map(x => new Tensor(SerialPrecision.Float.parse(x.getAs[String]("tensorSrc")), 1, 1, dim)).toList.asJava,
+          1.asInstanceOf[Integer] -> positiveExamples.map(x => new Tensor(SerialPrecision.Float.parse(x.getAs[String]("tensorSrc")), 1, 1, dim)).toList.asJava
+        ).asJava)
+        classifierNetwork = classifierTuple.getFirst
+        dimensionSelectionFunction = classifierTuple.getSecond
+
         null
       })(log)
     }
 
     if (positiveExamples.isEmpty || negativeExamples.isEmpty) {
       // Build Tag Model
-      val (newPositives, newNegatives) = newConfirmationBatch(index = index, sample = initialSamples, log = log).partition(_._2)
-      positiveExamples ++= newPositives.keys.map(_.toInt).map(findRows(_).head()).toList
-      negativeExamples ++= newNegatives.keys.map(_.toInt).map(findRows(_).head()).toList
+      val (newPositives, newNegatives) = newConfirmationBatch(index = index, sample = initialSamples, log = log).map(x => (x._1.toInt, x._2)).partition(_._2)
+      positiveExamples ++= newPositives.keys.map(findRows(_).head()).toList
+      negativeExamples ++= newNegatives.keys.map(findRows(_).head()).toList
     }
     trainEpoch(log = log)
 
     for (i <- 0 until sampleEpochs) {
-      val (newPositives, newNegatives) = newConfirmationBatch(index = bestSamples(incrementalSamples), sample = incrementalSamples, log = log).partition(_._2)
-      positiveExamples ++= newPositives.keys.map(_.toInt).map(findRows(_).head()).toList
-      negativeExamples ++= newNegatives.keys.map(_.toInt).map(findRows(_).head()).toList
+      val (newPositives, newNegatives) = newConfirmationBatch(index = bestSamples(incrementalSamples), sample = initialSamples, log = log).map(x => (x._1.toInt, x._2)).partition(_._2)
+      positiveExamples ++= newPositives.keys.map(findRows(_).head()).toList
+      negativeExamples ++= newNegatives.keys.map(findRows(_).head()).toList
       trainEpoch(log = log)
     }
 
     null
   }
+
+
 
   @JsonIgnore def sparkFactory: SparkSession = {
     val builder = SparkSession.builder()

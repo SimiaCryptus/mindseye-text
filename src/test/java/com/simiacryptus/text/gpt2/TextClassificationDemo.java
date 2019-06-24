@@ -19,6 +19,7 @@
 
 package com.simiacryptus.text.gpt2;
 
+import com.simiacryptus.lang.SerializableFunction;
 import com.simiacryptus.lang.TimedResult;
 import com.simiacryptus.lang.Tuple2;
 import com.simiacryptus.mindseye.eval.ArrayTrainable;
@@ -156,7 +157,7 @@ public class TextClassificationDemo extends NotebookReportBase {
   public void trainModel() throws IOException {
     List<String[]> rows = loadIndexFile();
     Map<Integer, Map<Integer, Tensor>> indexedData = toTensorMap(rows, featureDims);
-    Tuple2<PipelineNetwork, Function<Tensor, Tensor>> tuple2 = ClassifyUtil.buildClassifier(ClassifyUtil.mapValues(indexedData, entry -> new ArrayList<>(entry.values())));
+    Tuple2<PipelineNetwork, SerializableFunction<Tensor, Tensor>> tuple2 = ClassifyUtil.buildClassifier(ClassifyUtil.mapValues(indexedData, entry -> new ArrayList<>(entry.values())));
     PipelineNetwork classfier = tuple2._1;
     List<Tensor[]> indexData = rows.stream().map(e -> {
       return new Tensor[]{
