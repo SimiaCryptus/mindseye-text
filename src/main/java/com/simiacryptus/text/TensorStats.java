@@ -35,7 +35,7 @@ public class TensorStats {
   public Tensor scale;
   public Tensor avg;
 
-  public static TensorStats create(Collection<Tensor> values) {
+  public static TensorStats create(Collection<? extends Tensor> values) {
     TensorStats self = new TensorStats();
     self.avg = TestUtil.avg(values);
     self.biasLayer = new BiasLayer(self.avg.getDimensions()).set(self.avg.scaleInPlace(-1));
