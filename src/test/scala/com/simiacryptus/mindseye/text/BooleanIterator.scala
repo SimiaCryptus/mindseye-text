@@ -29,15 +29,10 @@ import com.simiacryptus.lang.SerializableFunction
 import com.simiacryptus.mindseye.art._
 import com.simiacryptus.mindseye.art.util.ArtUtil._
 import com.simiacryptus.mindseye.art.util._
-import com.simiacryptus.mindseye.eval.ArrayTrainable
 import com.simiacryptus.mindseye.lang.cudnn.Precision
 import com.simiacryptus.mindseye.lang.{SerialPrecision, Tensor}
 import com.simiacryptus.mindseye.layers.cudnn.BandAvgReducerLayer
-import com.simiacryptus.mindseye.layers.java._
-import com.simiacryptus.mindseye.network.{PipelineNetwork, SimpleLossNetwork}
-import com.simiacryptus.mindseye.opt.IterativeTrainer
-import com.simiacryptus.mindseye.opt.line.ArmijoWolfeSearch
-import com.simiacryptus.mindseye.opt.orient.OwlQn
+import com.simiacryptus.mindseye.network.PipelineNetwork
 import com.simiacryptus.mindseye.text.BooleanIterator.{dim, featureDims}
 import com.simiacryptus.notebook.{FormQuery, MarkdownNotebookOutput, NotebookOutput}
 import com.simiacryptus.sparkbook.util.Java8Util._
@@ -48,6 +43,7 @@ import org.apache.spark.sql._
 import org.apache.spark.sql.types._
 
 import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 import scala.util.{Random, Try}
 
@@ -61,7 +57,7 @@ object TextClassifyUtil {
     -v
   }
 }
-import TextClassifyUtil._
+import com.simiacryptus.mindseye.text.TextClassifyUtil._
 object BooleanIterator_EC2 extends BooleanIterator with EC2Runner[Object] with AWSNotebookRunner[Object] {
 
   override def urlBase: String = String.format("http://%s:1080/etc/", InetAddress.getLocalHost.getHostAddress)
@@ -216,9 +212,6 @@ abstract class BooleanIterator extends ArtSetup[Object] with BasicOptimizer {
 
     def trainEpoch(log: NotebookOutput) = {
       withTrainingMonitor(monitor => {
-
-        import scala.collection.JavaConverters._
-
         val classifierTuple = ClassifyUtil.buildClassifier(Map(
           0.asInstanceOf[Integer] -> negativeExamples.map(x => new Tensor(SerialPrecision.Float.parse(x.getAs[String]("tensorSrc")), 1, 1, dim)).toList.asJava,
           1.asInstanceOf[Integer] -> positiveExamples.map(x => new Tensor(SerialPrecision.Float.parse(x.getAs[String]("tensorSrc")), 1, 1, dim)).toList.asJava
@@ -247,8 +240,6 @@ abstract class BooleanIterator extends ArtSetup[Object] with BasicOptimizer {
 
     null
   }
-
-
 
   @JsonIgnore def sparkFactory: SparkSession = {
     val builder = SparkSession.builder()
