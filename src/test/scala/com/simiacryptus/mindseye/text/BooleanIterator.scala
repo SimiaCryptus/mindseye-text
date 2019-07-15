@@ -57,7 +57,9 @@ object TextClassifyUtil {
     -v
   }
 }
+
 import com.simiacryptus.mindseye.text.TextClassifyUtil._
+
 object BooleanIterator_EC2 extends BooleanIterator with EC2Runner[Object] with AWSNotebookRunner[Object] {
 
   override def urlBase: String = String.format("http://%s:1080/etc/", InetAddress.getLocalHost.getHostAddress)
@@ -114,17 +116,17 @@ object BooleanIterator {
   def index(pipeline: => VisionPipeline[VisionPipelineLayer], imageSize: Int, images: String*)
            (implicit sparkSession: SparkSession) = {
     val rows = sparkSession.sparkContext.parallelize(images, images.length).flatMap(file => {
-      val layers = pipeline.getLayers.toArray
+      val layers = pipeline.getLayers
       val canvas = Tensor.fromRGB(VisionPipelineUtil.load(file, imageSize))
       val tuples = layers.foldLeft(List(canvas))((input, layer) => {
-        val l = layer._1.getLayer
+        val l = layer.getLayer
         val tensors = input ++ List(l.eval(input.last).getDataAndFree.getAndFree(0))
         l.freeRef()
         tensors
       })
       tuples.head.freeRef()
       val reducerLayer = new BandAvgReducerLayer()
-      val rows = (layers.map(_._1.name()) zip tuples.tail).toMap
+      val rows = (layers.map(_.name()) zip tuples.tail).toMap
         .mapValues(data => {
           val tensor = reducerLayer.eval(data).getDataAndFree.getAndFree(0)
           data.freeRef()
