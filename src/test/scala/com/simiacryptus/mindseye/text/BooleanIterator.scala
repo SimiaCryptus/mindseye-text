@@ -81,12 +81,13 @@ object BooleanIterator_EC2 extends BooleanIterator with EC2Runner[Object] with A
 object BooleanIterator_Local extends BooleanIterator with LocalRunner[Object] with NotebookRunner[Object] {
   override val urlBase: String = "http://localhost:1080/etc/"
 
-
   override def http_port: Int = 1081
 
   override def inputTimeoutSeconds = 30
 
   override def spark_master = "local[1]"
+
+  def s3bucket = "www.tigglegickle.com"
 
 }
 
@@ -118,7 +119,7 @@ object BooleanIterator {
     val rows = sparkSession.sparkContext.parallelize(images, images.length).flatMap(file => {
       val layers = pipeline.getLayers
       val canvas = Tensor.fromRGB(VisionPipelineUtil.load(file, imageSize))
-      val tuples = layers.foldLeft(List(canvas))((input, layer) => {
+      val tuples = layers.keys.foldLeft(List(canvas))((input, layer) => {
         val l = layer.getLayer
         val tensors = input ++ List(l.eval(input.last).getDataAndFree.getAndFree(0))
         l.freeRef()
@@ -126,7 +127,7 @@ object BooleanIterator {
       })
       tuples.head.freeRef()
       val reducerLayer = new BandAvgReducerLayer()
-      val rows = (layers.map(_.name()) zip tuples.tail).toMap
+      val rows = (layers.keys.map(_.name()) zip tuples.tail).toMap
         .mapValues(data => {
           val tensor = reducerLayer.eval(data).getDataAndFree.getAndFree(0)
           data.freeRef()
