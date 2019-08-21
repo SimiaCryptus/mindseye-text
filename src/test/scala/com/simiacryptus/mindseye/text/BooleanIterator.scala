@@ -104,7 +104,7 @@ object BooleanIterator {
 
   def indexImages(visionPipeline: => VisionPipeline[VisionPipelineLayer], toIndex: Int, indexResolution: Int, archiveUrl: String)
                  (files: String*)
-                 (implicit sparkSession: SparkSession): DataFrame = {
+                 (implicit log: NotebookOutput, sparkSession: SparkSession): DataFrame = {
     val indexed = Try {
       val previousIndex = sparkSession.read.parquet(archiveUrl)
       previousIndex.select("id").rdd.map(_.getString(0)).distinct().collect().toSet
@@ -115,10 +115,10 @@ object BooleanIterator {
   }
 
   def index(pipeline: => VisionPipeline[VisionPipelineLayer], imageSize: Int, images: String*)
-           (implicit sparkSession: SparkSession) = {
+           (implicit log: NotebookOutput, sparkSession: SparkSession) = {
     val rows = sparkSession.sparkContext.parallelize(images, images.length).flatMap(file => {
       val layers = pipeline.getLayers
-      val canvas = Tensor.fromRGB(VisionPipelineUtil.load(file, imageSize))
+      val canvas = Tensor.fromRGB(ImageArtUtil.load(log, file, imageSize))
       val tuples = layers.keys.foldLeft(List(canvas))((input, layer) => {
         val l = layer.getLayer
         val tensors = input ++ List(l.eval(input.last).getDataAndFree.getAndFree(0))
@@ -205,7 +205,7 @@ abstract class BooleanIterator extends ArtSetup[Object] with BasicOptimizer {
           }).mkString("\n")
         }
 
-        override def valueFromParams(parms: java.util.Map[String, String]): Map[String, Boolean] = {
+        override def valueFromParams(parms: java.util.Map[String, String], files: java.util.Map[String, String]): Map[String, Boolean] = {
           (for ((k, v) <- getValue) yield {
             k -> parms.getOrDefault(ids(k.toInt), "false").toBoolean
           })
@@ -247,7 +247,7 @@ abstract class BooleanIterator extends ArtSetup[Object] with BasicOptimizer {
   @JsonIgnore def sparkFactory: SparkSession = {
     val builder = SparkSession.builder()
     import scala.collection.JavaConverters._
-    VisionPipelineUtil.getHadoopConfig().asScala.foreach(t => builder.config(t.getKey, t.getValue))
+    ImageArtUtil.getHadoopConfig().asScala.foreach(t => builder.config(t.getKey, t.getValue))
     builder.master("local[8]").getOrCreate()
   }
 
