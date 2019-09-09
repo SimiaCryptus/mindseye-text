@@ -405,6 +405,31 @@
     <orderEntry type="library" name="Maven: org.apache.derby:derby:10.12.1.1" level="project" />
     <orderEntry type="module" module-name="mindseye-art-demo" scope="TEST" />
     <orderEntry type="module" module-name="mindseye-art" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="Maven: net.sourceforge.f2j:arpack_combined_all:0.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.github.fommil.netlib:core:1.1.2" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.github.fommil.netlib:netlib-native_ref-osx-x86_64:natives:1.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.github.fommil.netlib:native_ref-java:1.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.github.fommil:jniloader:1.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.github.fommil.netlib:netlib-native_ref-linux-x86_64:natives:1.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.github.fommil.netlib:netlib-native_ref-linux-i686:natives:1.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.github.fommil.netlib:netlib-native_ref-win-x86_64:natives:1.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.github.fommil.netlib:netlib-native_ref-win-i686:natives:1.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.github.fommil.netlib:netlib-native_ref-linux-armhf:natives:1.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.github.fommil.netlib:netlib-native_system-osx-x86_64:natives:1.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.github.fommil.netlib:native_system-java:1.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.github.fommil.netlib:netlib-native_system-linux-x86_64:natives:1.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.github.fommil.netlib:netlib-native_system-linux-i686:natives:1.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.github.fommil.netlib:netlib-native_system-linux-armhf:natives:1.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.github.fommil.netlib:netlib-native_system-win-x86_64:natives:1.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: com.github.fommil.netlib:netlib-native_system-win-i686:natives:1.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.ejml:ejml-all:0.37.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.ejml:ejml-core:0.37.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.ejml:ejml-fdense:0.37.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.ejml:ejml-ddense:0.37.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.ejml:ejml-cdense:0.37.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.ejml:ejml-zdense:0.37.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.ejml:ejml-dsparse:0.37.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.ejml:ejml-simple:0.37.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.bytedeco:javacpp:1.4.4" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.bytedeco.javacpp-presets:hdf5-platform:1.10.4-1.4.4" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.bytedeco.javacpp-presets:hdf5:linux-x86:1.10.4-1.4.4" level="project" />
