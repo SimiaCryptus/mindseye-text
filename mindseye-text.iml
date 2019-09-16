@@ -430,6 +430,10 @@
     <orderEntry type="library" scope="TEST" name="Maven: org.ejml:ejml-zdense:0.37.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.ejml:ejml-dsparse:0.37.1" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.ejml:ejml-simple:0.37.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.jcuda:jcusparse:10.0.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.jcuda:jcusparse-natives:windows-x86_64:10.0.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.jcuda:jcusolver:10.0.0" level="project" />
+    <orderEntry type="library" scope="TEST" name="Maven: org.jcuda:jcusolver-natives:windows-x86_64:10.0.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.bytedeco:javacpp:1.4.4" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.bytedeco.javacpp-presets:hdf5-platform:1.10.4-1.4.4" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.bytedeco.javacpp-presets:hdf5:linux-x86:1.10.4-1.4.4" level="project" />
