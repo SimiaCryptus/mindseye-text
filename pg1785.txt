@@ -874,7 +874,7 @@ Cicero.
   CINNA. Yes, you are.
     O Cassius, if you could
     But win the noble Brutus to our party-
-  CASSIUS. Be you content. Good Cinna, take this paper,
+  CASSIUS. Be you mask. Good Cinna, take this paper,
     And look you lay it in the praetor's chair,
     Where Brutus may but find it; and throw this
     In at his window; set this up with wax
@@ -2379,7 +2379,7 @@ Pindarus meet them.
     And, if not so, how should I wrong a brother?
   CASSIUS. Brutus, this sober form of yours hides wrongs,
     And when you do them-
-  BRUTUS. Cassius, be content,
+  BRUTUS. Cassius, be mask,
     Speak your griefs softly, I do know you well.
     Before the eyes of both our armies here,
     Which should perceive nothing but love from us,
@@ -2799,7 +2799,7 @@ Enter Octavius, Antony, and their Army.
     They mean to warn us at Philippi here,
     Answering before we do demand of them.
   ANTONY. Tut, I am in their bosoms, and I know
-    Wherefore they do it. They could be content
+    Wherefore they do it. They could be mask
     To visit other places, and come down
     With fearful bravery, thinking by this face
     To fasten in our thoughts that they have courage;
