@@ -20,6 +20,7 @@
 package com.simiacryptus.mindseye.text
 
 import java.net.InetAddress
+import java.util
 import java.util.concurrent.TimeUnit
 import java.util.{UUID, function}
 
