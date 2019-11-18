@@ -38,8 +38,8 @@
     <orderEntry type="library" name="Maven: com.google.code.findbugs:jsr305:3.0.2" level="project" />
     <orderEntry type="library" name="Maven: org.json:json:20180813" level="project" />
     <orderEntry type="library" name="Maven: de.javakaffee:kryo-serializers:0.45" level="project" />
-    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-core:2.9.9" level="project" />
-    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-databind:2.9.9" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-core:2.10.0" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-databind:2.10.0" level="project" />
     <orderEntry type="module" module-name="hadoop-jgit-fs" />
     <orderEntry type="library" name="Maven: org.eclipse.jgit:org.eclipse.jgit:5.2.1.201812262042-r" level="project" />
     <orderEntry type="library" name="Maven: com.jcraft:jsch:0.1.55" level="project" />
@@ -97,7 +97,7 @@
     <orderEntry type="library" name="Maven: com.amazonaws:aws-java-sdk-codecommit:1.11.495" level="project" />
     <orderEntry type="module" module-name="mindseye-core" />
     <orderEntry type="library" name="Maven: org.jetbrains:annotations:17.0.0" level="project" />
-    <orderEntry type="library" name="Maven: com.simiacryptus:refcount-core:1.8.1" level="project" />
+    <orderEntry type="module" module-name="refcount-core" />
     <orderEntry type="module" module-name="mindseye-cudnn" />
     <orderEntry type="module" module-name="mindseye-java" />
     <orderEntry type="module" module-name="mindseye-test" />
@@ -181,7 +181,7 @@
     <orderEntry type="module" module-name="tf-gpt-2" />
     <orderEntry type="library" name="Maven: org.tensorflow:proto:1.13.1" level="project" />
     <orderEntry type="module" module-name="tensorflow-model" />
-    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.9.9" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.10.0" level="project" />
     <orderEntry type="library" name="Maven: org.xerial.snappy:snappy-java:1.1.7.2" level="project" />
     <orderEntry type="library" name="Maven: com.google.code.gson:gson:2.8.5" level="project" />
     <orderEntry type="library" name="Maven: commons-io:commons-io:2.6" level="project" />
@@ -293,8 +293,8 @@
     <orderEntry type="library" name="Maven: io.dropwizard.metrics:metrics-jvm:3.1.5" level="project" />
     <orderEntry type="library" name="Maven: io.dropwizard.metrics:metrics-json:3.1.5" level="project" />
     <orderEntry type="library" name="Maven: io.dropwizard.metrics:metrics-graphite:3.1.5" level="project" />
-    <orderEntry type="library" name="Maven: com.fasterxml.jackson.module:jackson-module-scala_2.11:2.9.9" level="project" />
-    <orderEntry type="library" name="Maven: com.fasterxml.jackson.module:jackson-module-paranamer:2.9.9" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.module:jackson-module-scala_2.11:2.10.0" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.module:jackson-module-paranamer:2.10.0" level="project" />
     <orderEntry type="library" name="Maven: org.apache.ivy:ivy:2.4.0" level="project" />
     <orderEntry type="library" name="Maven: oro:oro:2.0.8" level="project" />
     <orderEntry type="library" name="Maven: net.razorvine:pyrolite:4.13" level="project" />
