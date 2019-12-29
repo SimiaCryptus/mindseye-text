@@ -112,20 +112,16 @@ public class ClassifyUtil {
     Map<Integer, PipelineNetwork> networks = statsMap.entrySet().stream().collect(Collectors.toMap(e -> e.getKey(), entry -> {
       TensorStats tensorStats = entry.getValue();
       PipelineNetwork net = new PipelineNetwork(1);
-      net.wrap(new ProductInputsLayer(), net.wrap(tensorStats.biasLayer,
-          net.wrap(new AssertDimensionsLayer(dimensions), net.getInput(0))
-      ), net.constValue(tensorStats.scale));
-      net.wrap(new NthPowerActivationLayer().setPower(2));
-      net.wrap(new SumReducerLayer());
-      net.wrap(new NthPowerActivationLayer().setPower(0.5));
+      net.add(new ProductInputsLayer(), net.add(tensorStats.biasLayer, net.add(new AssertDimensionsLayer(dimensions), net.getInput(0))), net.constValue(tensorStats.scale));
+      net.add(new NthPowerActivationLayer().setPower(2));
+      net.add(new SumReducerLayer());
+      net.add(new NthPowerActivationLayer().setPower(0.5));
       return net;
     }));
 
     PipelineNetwork classfier = new PipelineNetwork(1);
-    DAGNode input = classfier.wrap(new AssertDimensionsLayer(dimensions), classfier.getInput(0)); //classfier.getInput(0);
-    classfier.wrap(new TensorConcatLayer(),
-        classfier.add(networks.get(0), input),
-        classfier.add(networks.get(1), input));
+    DAGNode input = classfier.add(new AssertDimensionsLayer(dimensions), classfier.getInput(0)); //classfier.getInput(0);
+    classfier.add(new TensorConcatLayer(), classfier.add(networks.get(0), input), classfier.add(networks.get(1), input));
     return classfier;
   }
 

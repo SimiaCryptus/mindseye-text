@@ -39,10 +39,10 @@ public class TensorStats {
     TensorStats self = new TensorStats();
     self.avg = TestUtil.avg(values);
     self.biasLayer = new BiasLayer(self.avg.getDimensions()).set(self.avg.scaleInPlace(-1));
-    Tensor scales = TestUtil.sum(PipelineNetwork.wrap(1, self.biasLayer.addRef(), new NthPowerActivationLayer().setPower(2)).map(values));
+    Tensor scales = TestUtil.sum(PipelineNetwork.build(1, self.biasLayer.addRef(), new NthPowerActivationLayer().setPower(2)).map(values));
     self.scale = scales
         .scaleInPlace(1.0 / values.size())
-        .mapAndFree(v -> Math.pow(v, -0.5));
+        .map(v -> Math.pow(v, -0.5));
     return self;
   }
 }

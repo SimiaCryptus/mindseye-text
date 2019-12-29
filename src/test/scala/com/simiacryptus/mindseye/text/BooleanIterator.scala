@@ -51,7 +51,7 @@ import scala.util.{Random, Try}
 object TextClassifyUtil {
   def getSampleEntropy(classifierNetwork: PipelineNetwork, dimensionSelectionFunction: function.Function[Tensor, Tensor], row: Row): Double = {
     val tensor = new Tensor(SerialPrecision.Float.parse(row.getAs[String]("tensorSrc")), featureDims: _*)
-    val result = classifierNetwork.eval(dimensionSelectionFunction.apply(tensor)).getDataAndFree.getAndFree(0)
+    val result = classifierNetwork.eval(dimensionSelectionFunction.apply(tensor)).getData.get(0)
     val v = result.get(0)
     tensor.freeRef()
     result.freeRef()
@@ -122,7 +122,7 @@ object BooleanIterator {
       val canvas = Tensor.fromRGB(ImageArtUtil.load(log, file, imageSize))
       val tuples = layers.keys.foldLeft(List(canvas))((input, layer) => {
         val l = layer.getLayer
-        val tensors = input ++ List(l.eval(input.last).getDataAndFree.getAndFree(0))
+        val tensors = input ++ List(l.eval(input.last).getData.get(0))
         l.freeRef()
         tensors
       })
@@ -130,7 +130,7 @@ object BooleanIterator {
       val reducerLayer = new BandAvgReducerLayer()
       val rows = (layers.keys.map(_.name()) zip tuples.tail).toMap
         .mapValues(data => {
-          val tensor = reducerLayer.eval(data).getDataAndFree.getAndFree(0)
+          val tensor = reducerLayer.eval(data).getData.get(0)
           data.freeRef()
           val doubles = tensor.getData.clone()
           tensor.freeRef()

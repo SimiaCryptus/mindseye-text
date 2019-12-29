@@ -23,10 +23,7 @@ import com.simiacryptus.lang.SerializableFunction;
 import com.simiacryptus.lang.TimedResult;
 import com.simiacryptus.lang.Tuple2;
 import com.simiacryptus.mindseye.eval.ArrayTrainable;
-import com.simiacryptus.mindseye.lang.Coordinate;
-import com.simiacryptus.mindseye.lang.Layer;
-import com.simiacryptus.mindseye.lang.SerialPrecision;
-import com.simiacryptus.mindseye.lang.Tensor;
+import com.simiacryptus.mindseye.lang.*;
 import com.simiacryptus.mindseye.layers.java.EntropyLossLayer;
 import com.simiacryptus.mindseye.layers.java.LinearActivationLayer;
 import com.simiacryptus.mindseye.layers.java.SoftmaxLayer;
@@ -165,16 +162,15 @@ public class TextClassificationDemo extends NotebookReportBase {
           tuple2._2.apply(new Tensor(SerialPrecision.Float.parse(e[2]), featureDims))
       };
     }).collect(Collectors.toList());
-    classfier.wrap(pretrain(classfier, indexData));
-    classfier.wrap(new SoftmaxLayer());
+    classfier.add(pretrain(classfier, indexData));
+    classfier.add(new SoftmaxLayer());
     Tensor[][] trainingData = IntStream.range(0, indexData.size()).mapToObj(i -> new Tensor[]{
         indexData.get(i)[1],
         indexData.get(i)[0]
     }).toArray(i -> new Tensor[i][]);
-    double trainingResult = IterativeTrainer.wrap(new ArrayTrainable(trainingData, new SimpleLossNetwork(classfier, new EntropyLossLayer()), 1000))
+    double trainingResult = new IterativeTrainer(new ArrayTrainable(trainingData, new SimpleLossNetwork(classfier, new EntropyLossLayer()), 1000))
         .setMaxIterations(100)
-        .setTimeout(5, TimeUnit.MINUTES)
-        .runAndFree();
+        .setTimeout(5, TimeUnit.MINUTES).run();
     logger.info(String.format("Training Result: %s", trainingResult));
     classfier.writeZip(new File(base, "model.zip"));
   }
@@ -197,7 +193,7 @@ public class TextClassificationDemo extends NotebookReportBase {
           try {
             Tensor category = new Tensor(2).set(Integer.parseInt(strs[1]), 1);
             Tensor nlpTransform = languageTransform.apply(strs[2]).get();
-            Tensor prediction = classifier.eval(nlpTransform).getDataAndFree().getAndFree(0);
+            Tensor prediction = classifier.eval(nlpTransform).getData().get(0);
             return new Tensor[]{
                 category,
                 nlpTransform,
@@ -210,7 +206,7 @@ public class TextClassificationDemo extends NotebookReportBase {
 
         EntropyLossLayer entropyLossLayer = new EntropyLossLayer();
         double totalEntropy = Arrays.stream(evalData).mapToDouble(row -> {
-          return entropyLossLayer.eval(row[2], row[0]).getDataAndFree().getAndFree(0).get(0);
+          return entropyLossLayer.eval(row[2], row[0]).getData().get(0).get(0);
         }).sum();
         double accuracy = Arrays.stream(evalData).mapToDouble(row -> {
           Tensor prediction = row[2];
@@ -233,13 +229,9 @@ public class TextClassificationDemo extends NotebookReportBase {
         preEval.get(i),
         indexData.get(i)[0]
     }).toArray(i -> new Tensor[i][]);
-    double trainingResult = IterativeTrainer.wrap(new ArrayTrainable(trainingData, new SimpleLossNetwork(PipelineNetwork.wrap(1,
-        activationLayer.addRef(),
-        new SoftmaxLayer()
-    ), new EntropyLossLayer())))
+    double trainingResult = new IterativeTrainer(new ArrayTrainable(trainingData, new SimpleLossNetwork(PipelineNetwork.build(1, activationLayer.addRef(), new SoftmaxLayer()), new EntropyLossLayer())))
         .setMaxIterations(100)
-        .setTimeout(5, TimeUnit.MINUTES)
-        .runAndFree();
+        .setTimeout(5, TimeUnit.MINUTES).run();
     logger.info(String.format("Training Result: %s", trainingResult));
     return activationLayer;
   }
