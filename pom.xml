@@ -174,8 +174,17 @@
         </dependency>
         <dependency>
             <groupId>com.simiacryptus</groupId>
-            <artifactId>mindseye-art-demo</artifactId>
-            <scope>test</scope>
+            <artifactId>refcount-core</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.simiacryptus</groupId>
+            <artifactId>mindseye-art</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.simiacryptus</groupId>
+            <artifactId>deepartist.org</artifactId>
             <version>${project.version}</version>
         </dependency>
 

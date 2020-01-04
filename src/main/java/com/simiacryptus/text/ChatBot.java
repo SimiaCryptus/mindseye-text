@@ -31,11 +31,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.Scanner;
 import java.util.function.BiFunction;
 
-public class ChatBot {
+public @com.simiacryptus.ref.lang.RefAware
+class ChatBot {
   protected static final Logger logger = LoggerFactory.getLogger(ChatBot.class);
   private final TextGenerator root;
   private final String characterWhitelist = "a-zA-Z01-9,.'\"\\!\\@\\$\\&\\*\\(\\)\\#\\-\\=\\+/";
@@ -74,36 +74,17 @@ public class ChatBot {
     }
   }
 
-  @NotNull
-  protected TextGenerator init() throws IOException, NoSuchAlgorithmException, KeyManagementException, URISyntaxException {
-    TextGenerator textGenerator = GPT2Util.getTextGenerator(root.copy(), characterWhitelist, (null == wordlist || wordlist.isEmpty()) ? null : new URI(wordlist));
-    textGenerator = GPT2Util.getTextGenerator(textGenerator, Arrays.asList(
-//            SimpleModel.build(GPT2Util.getCodec_345M(), IOUtils.toString(new URI("http://classics.mit.edu/Aesop/fab.mb.txt"), "UTF-8"))
-    ), seeds);
-    textGenerator.setVerbose(verbose);
-    textGenerator.setChoicesToLog(choicesToLog);
-    textGenerator.setModel(new TemperatureWrapper(1.0 / temperature, textGenerator.getModel()));
-    textGenerator.setModel(new MinEntropyWrapper(minEntropy, textGenerator.getModel()));
-    BiFunction<String, String, Boolean> filterFn = textGenerator.getModel().getFilterFn();
-    textGenerator.getModel().setFilterFn((s, s2) -> {
-      if (s.endsWith("\n") && s2.startsWith("\n")) return false;
-      return filterFn.apply(s, s2);
-    });
-    return textGenerator;
-  }
-
-  public String dialog(String nextLine) throws URISyntaxException, KeyManagementException, NoSuchAlgorithmException, IOException {
-    if (!nextLine.equals(nextLine.trim())) return dialog(nextLine.trim());
+  public String dialog(String nextLine)
+      throws URISyntaxException, KeyManagementException, NoSuchAlgorithmException, IOException {
+    if (!nextLine.equals(nextLine.trim()))
+      return dialog(nextLine.trim());
     if (nextLine.equals("reset")) {
       textGenerator = init();
       return "AI State Reset";
     } else if (nextLine.equals("help")) {
-      return "temp=X - Set Temperature\n" +
-          "ent=X - Set Minimum Choice Entropy\n" +
-          "verbose=X - Set Verbosity\n" +
-          "choice=X - Set Number of Alternates to log\n" +
-          "length=X - Set Length\n" +
-          "wordlist=X - Set wordlist url";
+      return "temp=X - Set Temperature\n" + "ent=X - Set Minimum Choice Entropy\n" + "verbose=X - Set Verbosity\n"
+          + "choice=X - Set Number of Alternates to log\n" + "length=X - Set Length\n"
+          + "wordlist=X - Set wordlist url";
     } else {
       String[] split = nextLine.split("=");
       if (split.length == 2)
@@ -137,13 +118,33 @@ public class ChatBot {
     if (!nextLine.isEmpty()) {
       textGenerator.feed(prefix + nextLine + suffix);
     }
-    return textGenerator.generate(s ->
-        s.split("[^\\w]+").length < 4 ||
-            s.split("[^\\w]+").length < maxLength && !s.contains("\n")
-    ).trim();
+    return textGenerator
+        .generate(s -> s.split("[^\\w]+").length < 4 || s.split("[^\\w]+").length < maxLength && !s.contains("\n"))
+        .trim();
   }
 
   public void reset() throws URISyntaxException, KeyManagementException, NoSuchAlgorithmException, IOException {
     textGenerator = init();
+  }
+
+  @NotNull
+  protected TextGenerator init()
+      throws IOException, NoSuchAlgorithmException, KeyManagementException, URISyntaxException {
+    TextGenerator textGenerator = GPT2Util.getTextGenerator(root.copy(), characterWhitelist,
+        (null == wordlist || wordlist.isEmpty()) ? null : new URI(wordlist));
+    textGenerator = GPT2Util.getTextGenerator(textGenerator, com.simiacryptus.ref.wrappers.RefArrays.asList(
+        //            SimpleModel.build(GPT2Util.getCodec_345M(), IOUtils.toString(new URI("http://classics.mit.edu/Aesop/fab.mb.txt"), "UTF-8"))
+    ), seeds);
+    textGenerator.setVerbose(verbose);
+    textGenerator.setChoicesToLog(choicesToLog);
+    textGenerator.setModel(new TemperatureWrapper(1.0 / temperature, textGenerator.getModel()));
+    textGenerator.setModel(new MinEntropyWrapper(minEntropy, textGenerator.getModel()));
+    BiFunction<String, String, Boolean> filterFn = textGenerator.getModel().getFilterFn();
+    textGenerator.getModel().setFilterFn((s, s2) -> {
+      if (s.endsWith("\n") && s2.startsWith("\n"))
+        return false;
+      return filterFn.apply(s, s2);
+    });
+    return textGenerator;
   }
 }

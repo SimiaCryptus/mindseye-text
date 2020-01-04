@@ -24,25 +24,50 @@ import com.simiacryptus.mindseye.layers.java.BiasLayer;
 import com.simiacryptus.mindseye.layers.java.NthPowerActivationLayer;
 import com.simiacryptus.mindseye.network.PipelineNetwork;
 import com.simiacryptus.mindseye.test.TestUtil;
+import com.simiacryptus.ref.lang.ReferenceCountingBase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-
-public class TensorStats {
+public @com.simiacryptus.ref.lang.RefAware
+class TensorStats extends ReferenceCountingBase {
   protected static final Logger logger = LoggerFactory.getLogger(TensorStats.class);
   public BiasLayer biasLayer;
   public Tensor scale;
   public Tensor avg;
 
-  public static TensorStats create(Collection<? extends Tensor> values) {
+  public static TensorStats create(com.simiacryptus.ref.wrappers.RefCollection<? extends Tensor> values) {
     TensorStats self = new TensorStats();
     self.avg = TestUtil.avg(values);
     self.biasLayer = new BiasLayer(self.avg.getDimensions()).set(self.avg.scaleInPlace(-1));
-    Tensor scales = TestUtil.sum(PipelineNetwork.build(1, self.biasLayer.addRef(), new NthPowerActivationLayer().setPower(2)).map(values));
-    self.scale = scales
-        .scaleInPlace(1.0 / values.size())
-        .map(v -> Math.pow(v, -0.5));
+    Tensor scales = TestUtil
+        .sum(PipelineNetwork.build(1, self.biasLayer.addRef(), new NthPowerActivationLayer().setPower(2)).map(values));
+    self.scale = scales.scaleInPlace(1.0 / values.size()).map(v -> Math.pow(v, -0.5));
     return self;
+  }
+
+  public static @SuppressWarnings("unused")
+  TensorStats[] addRefs(TensorStats[] array) {
+    if (array == null)
+      return null;
+    return java.util.Arrays.stream(array).filter((x) -> x != null).map(TensorStats::addRef)
+        .toArray((x) -> new TensorStats[x]);
+  }
+
+  public static @SuppressWarnings("unused")
+  TensorStats[][] addRefs(TensorStats[][] array) {
+    if (array == null)
+      return null;
+    return java.util.Arrays.stream(array).filter((x) -> x != null).map(TensorStats::addRefs)
+        .toArray((x) -> new TensorStats[x][]);
+  }
+
+  public @SuppressWarnings("unused")
+  void _free() {
+  }
+
+  public @Override
+  @SuppressWarnings("unused")
+  TensorStats addRef() {
+    return (TensorStats) super.addRef();
   }
 }

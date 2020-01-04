@@ -20,7 +20,6 @@
 package com.simiacryptus.mindseye.text
 
 import java.net.InetAddress
-import java.util
 import java.util.concurrent.TimeUnit
 import java.util.{UUID, function}
 
@@ -28,7 +27,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.simiacryptus.aws.exe.EC2NodeSettings
 import com.simiacryptus.lang.SerializableFunction
 import com.simiacryptus.mindseye.art._
-import com.simiacryptus.mindseye.art.util.ArtUtil._
 import com.simiacryptus.mindseye.art.util._
 import com.simiacryptus.mindseye.lang.cudnn.Precision
 import com.simiacryptus.mindseye.lang.{SerialPrecision, Tensor}
@@ -36,6 +34,7 @@ import com.simiacryptus.mindseye.layers.cudnn.BandAvgReducerLayer
 import com.simiacryptus.mindseye.network.PipelineNetwork
 import com.simiacryptus.mindseye.text.BooleanIterator.{dim, featureDims}
 import com.simiacryptus.notebook.{FormQuery, MarkdownNotebookOutput, NotebookOutput}
+import com.simiacryptus.ref.wrappers.{RefArrayList, RefHashMap, RefList, RefMap}
 import com.simiacryptus.sparkbook.util.Java8Util._
 import com.simiacryptus.sparkbook.util.LocalRunner
 import com.simiacryptus.sparkbook.{AWSNotebookRunner, EC2Runner, NotebookRunner}
@@ -215,11 +214,11 @@ abstract class BooleanIterator extends ArtSetup[Object] with BasicOptimizer {
     }
 
     def trainEpoch(log: NotebookOutput) = {
-      withTrainingMonitor(monitor => {
-        val classifierTuple = ClassifyUtil.buildClassifier(Map(
-          0.asInstanceOf[Integer] -> negativeExamples.map(x => new Tensor(SerialPrecision.Float.parse(x.getAs[String]("tensorSrc")), 1, 1, dim)).toList.asJava,
-          1.asInstanceOf[Integer] -> positiveExamples.map(x => new Tensor(SerialPrecision.Float.parse(x.getAs[String]("tensorSrc")), 1, 1, dim)).toList.asJava
-        ).asJava)
+      ArtUtil.withTrainingMonitor(monitor => {
+        val classifierTuple = ClassifyUtil.buildClassifier(new RefHashMap[Integer, RefList[Tensor]](Map(
+          0.asInstanceOf[Integer] -> new RefArrayList[Tensor](negativeExamples.map(x => new Tensor(SerialPrecision.Float.parse(x.getAs[String]("tensorSrc")), 1, 1, dim)).toList.asJava),
+          1.asInstanceOf[Integer] -> new RefArrayList[Tensor](positiveExamples.map(x => new Tensor(SerialPrecision.Float.parse(x.getAs[String]("tensorSrc")), 1, 1, dim)).toList.asJava)
+        ).asJava))
         classifierNetwork = classifierTuple.getFirst
         dimensionSelectionFunction = classifierTuple.getSecond
 
