@@ -34,7 +34,7 @@ import com.simiacryptus.mindseye.layers.cudnn.BandAvgReducerLayer
 import com.simiacryptus.mindseye.network.PipelineNetwork
 import com.simiacryptus.mindseye.text.BooleanIterator.{dim, featureDims}
 import com.simiacryptus.notebook.{FormQuery, MarkdownNotebookOutput, NotebookOutput}
-import com.simiacryptus.ref.wrappers.{RefArrayList, RefHashMap, RefList, RefMap}
+import com.simiacryptus.ref.wrappers.{RefArrayList, RefHashMap, RefList}
 import com.simiacryptus.sparkbook.util.Java8Util._
 import com.simiacryptus.sparkbook.util.LocalRunner
 import com.simiacryptus.sparkbook.{AWSNotebookRunner, EC2Runner, NotebookRunner}
