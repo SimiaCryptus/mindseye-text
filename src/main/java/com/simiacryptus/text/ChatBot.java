@@ -19,6 +19,8 @@
 
 package com.simiacryptus.text;
 
+import com.simiacryptus.ref.lang.RefAware;
+import com.simiacryptus.ref.wrappers.RefArrays;
 import com.simiacryptus.text.gpt2.GPT2Util;
 import com.simiacryptus.util.test.SysOutInterceptor;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +36,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Scanner;
 import java.util.function.BiFunction;
 
-public @com.simiacryptus.ref.lang.RefAware
+public @RefAware
 class ChatBot {
   protected static final Logger logger = LoggerFactory.getLogger(ChatBot.class);
   private final TextGenerator root;
@@ -132,7 +134,7 @@ class ChatBot {
       throws IOException, NoSuchAlgorithmException, KeyManagementException, URISyntaxException {
     TextGenerator textGenerator = GPT2Util.getTextGenerator(root.copy(), characterWhitelist,
         (null == wordlist || wordlist.isEmpty()) ? null : new URI(wordlist));
-    textGenerator = GPT2Util.getTextGenerator(textGenerator, com.simiacryptus.ref.wrappers.RefArrays.asList(
+    textGenerator = GPT2Util.getTextGenerator(textGenerator, RefArrays.asList(
         //            SimpleModel.build(GPT2Util.getCodec_345M(), IOUtils.toString(new URI("http://classics.mit.edu/Aesop/fab.mb.txt"), "UTF-8"))
     ), seeds);
     textGenerator.setVerbose(verbose);

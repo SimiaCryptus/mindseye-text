@@ -24,18 +24,22 @@ import com.simiacryptus.mindseye.layers.java.BiasLayer;
 import com.simiacryptus.mindseye.layers.java.NthPowerActivationLayer;
 import com.simiacryptus.mindseye.network.PipelineNetwork;
 import com.simiacryptus.mindseye.test.TestUtil;
+import com.simiacryptus.ref.lang.RefAware;
 import com.simiacryptus.ref.lang.ReferenceCountingBase;
+import com.simiacryptus.ref.wrappers.RefCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public @com.simiacryptus.ref.lang.RefAware
+import java.util.Arrays;
+
+public @RefAware
 class TensorStats extends ReferenceCountingBase {
   protected static final Logger logger = LoggerFactory.getLogger(TensorStats.class);
   public BiasLayer biasLayer;
   public Tensor scale;
   public Tensor avg;
 
-  public static TensorStats create(com.simiacryptus.ref.wrappers.RefCollection<? extends Tensor> values) {
+  public static TensorStats create(RefCollection<? extends Tensor> values) {
     TensorStats self = new TensorStats();
     self.avg = TestUtil.avg(values);
     self.biasLayer = new BiasLayer(self.avg.getDimensions()).set(self.avg.scaleInPlace(-1));
@@ -49,7 +53,7 @@ class TensorStats extends ReferenceCountingBase {
   TensorStats[] addRefs(TensorStats[] array) {
     if (array == null)
       return null;
-    return java.util.Arrays.stream(array).filter((x) -> x != null).map(TensorStats::addRef)
+    return Arrays.stream(array).filter((x) -> x != null).map(TensorStats::addRef)
         .toArray((x) -> new TensorStats[x]);
   }
 
@@ -57,7 +61,7 @@ class TensorStats extends ReferenceCountingBase {
   TensorStats[][] addRefs(TensorStats[][] array) {
     if (array == null)
       return null;
-    return java.util.Arrays.stream(array).filter((x) -> x != null).map(TensorStats::addRefs)
+    return Arrays.stream(array).filter((x) -> x != null).map(TensorStats::addRefs)
         .toArray((x) -> new TensorStats[x][]);
   }
 

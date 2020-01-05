@@ -34,6 +34,8 @@ import com.simiacryptus.mindseye.network.PipelineNetwork;
 import com.simiacryptus.mindseye.network.SimpleLossNetwork;
 import com.simiacryptus.mindseye.opt.IterativeTrainer;
 import com.simiacryptus.mindseye.test.NotebookReportBase;
+import com.simiacryptus.ref.lang.RefAware;
+import com.simiacryptus.ref.wrappers.*;
 import com.simiacryptus.text.ClassifyUtil;
 import com.simiacryptus.text.ProjectorUtil;
 import com.simiacryptus.text.TensorStats;
@@ -45,13 +47,14 @@ import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.zip.ZipFile;
 
-public @com.simiacryptus.ref.lang.RefAware
+public @RefAware
 class TextClassificationDemo extends NotebookReportBase {
 
   public static final File base = new File("C:\\Users\\andre\\Downloads\\twitter-sentiment-analysis2");
@@ -68,20 +71,20 @@ class TextClassificationDemo extends NotebookReportBase {
     return GPT2Model.class;
   }
 
-  public static Coordinate[] mostSignifigantClassifierPins(com.simiacryptus.ref.wrappers.RefList<String[]> rows,
+  public static Coordinate[] mostSignifigantClassifierPins(RefList<String[]> rows,
                                                            int primaryKey, int secondaryKey, int maxDims, int[] featureDims) {
-    com.simiacryptus.ref.wrappers.RefMap<Integer, com.simiacryptus.ref.wrappers.RefMap<Integer, Tensor>> indexedData = toTensorMap(
+    RefMap<Integer, RefMap<Integer, Tensor>> indexedData = toTensorMap(
         rows, featureDims);
-    com.simiacryptus.ref.wrappers.RefMap<Integer, TensorStats> statsMap = ClassifyUtil.mapValues(indexedData,
+    RefMap<Integer, TensorStats> statsMap = ClassifyUtil.mapValues(indexedData,
         entry -> TensorStats.create(entry.values()));
     return ClassifyUtil.mostSignifigantCoords(statsMap.get(primaryKey), statsMap.get(secondaryKey), maxDims);
   }
 
-  public static com.simiacryptus.ref.wrappers.RefMap<Integer, com.simiacryptus.ref.wrappers.RefMap<Integer, Tensor>> toTensorMap(
-      com.simiacryptus.ref.wrappers.RefList<String[]> rows, int[] featureDims) {
-    return rows.stream().collect(com.simiacryptus.ref.wrappers.RefCollectors.groupingBy((String[] row) -> {
+  public static RefMap<Integer, RefMap<Integer, Tensor>> toTensorMap(
+      RefList<String[]> rows, int[] featureDims) {
+    return rows.stream().collect(RefCollectors.groupingBy((String[] row) -> {
       return Integer.parseInt(row[0]);
-    }, com.simiacryptus.ref.wrappers.RefCollectors.toMap((String[] row) -> {
+    }, RefCollectors.toMap((String[] row) -> {
       return Integer.parseInt(row[1]);
     }, (String[] row) -> {
       return new Tensor(SerialPrecision.Float.parse(row[2]), featureDims);
@@ -92,7 +95,7 @@ class TextClassificationDemo extends NotebookReportBase {
   TextClassificationDemo[] addRefs(TextClassificationDemo[] array) {
     if (array == null)
       return null;
-    return java.util.Arrays.stream(array).filter((x) -> x != null).map(TextClassificationDemo::addRef)
+    return Arrays.stream(array).filter((x) -> x != null).map(TextClassificationDemo::addRef)
         .toArray((x) -> new TextClassificationDemo[x]);
   }
 
@@ -100,7 +103,7 @@ class TextClassificationDemo extends NotebookReportBase {
   TextClassificationDemo[][] addRefs(TextClassificationDemo[][] array) {
     if (array == null)
       return null;
-    return java.util.Arrays.stream(array).filter((x) -> x != null).map(TextClassificationDemo::addRefs)
+    return Arrays.stream(array).filter((x) -> x != null).map(TextClassificationDemo::addRefs)
         .toArray((x) -> new TextClassificationDemo[x][]);
   }
 
@@ -109,15 +112,15 @@ class TextClassificationDemo extends NotebookReportBase {
     List<String> sourceLines = FileUtils.readLines(new File(base, "train.csv"),
         "UTF-8");
     String header = sourceLines.get(0);
-    com.simiacryptus.ref.wrappers.RefArrayList<String> strings = new com.simiacryptus.ref.wrappers.RefArrayList<>(
+    RefArrayList<String> strings = new RefArrayList<>(
         sourceLines.subList(1, sourceLines.size()));
-    com.simiacryptus.ref.wrappers.RefCollections.shuffle(strings);
-    com.simiacryptus.ref.wrappers.RefArrayList<Object> training = new com.simiacryptus.ref.wrappers.RefArrayList<>();
+    RefCollections.shuffle(strings);
+    RefArrayList<Object> training = new RefArrayList<>();
     training.add(header);
     int splitAt = (int) (strings.size() * 0.9);
     training.addAll(strings.subList(0, splitAt));
     FileUtils.writeLines(new File(base, "train_use.csv"), training);
-    com.simiacryptus.ref.wrappers.RefArrayList<Object> holdout = new com.simiacryptus.ref.wrappers.RefArrayList<>();
+    RefArrayList<Object> holdout = new RefArrayList<>();
     holdout.add(header);
     holdout.addAll(strings.subList(splitAt, strings.size()));
     FileUtils.writeLines(new File(base, "holdout.csv"), holdout);
@@ -128,26 +131,26 @@ class TextClassificationDemo extends NotebookReportBase {
     File indexFile = new File(base, "index.csv");
     int currentlyIndexed = indexFile.exists() ? FileUtils.readLines(indexFile, "UTF-8").size() : 0;
     File file = new File(base, "train_use.csv");
-    com.simiacryptus.ref.wrappers.RefList<String[]> rows = com.simiacryptus.ref.wrappers.RefArrays
+    RefList<String[]> rows = RefArrays
         .stream(FileUtils.readFileToString(file, "UTF-8").split("\n")).map(s -> s.split(",", 3))
-        .collect(com.simiacryptus.ref.wrappers.RefCollectors.toList());
+        .collect(RefCollectors.toList());
     @NotNull
     Function<String, Future<Tensor>> languageTransform = ClassifyUtil.getLanguageTransform(1);
     int batchSize = 10;
     for (int startRow = 1 + currentlyIndexed; startRow < rows.size(); startRow += batchSize) {
       logger.info("Processing rows from " + startRow);
-      com.simiacryptus.ref.wrappers.RefList<String[]> subList = rows.subList(startRow,
+      RefList<String[]> subList = rows.subList(startRow,
           Math.min(rows.size(), startRow + batchSize));
       TimedResult<Void> time = TimedResult.time(() -> {
-        com.simiacryptus.ref.wrappers.RefList<com.simiacryptus.ref.wrappers.RefList<String>> dataTable = subList
+        RefList<RefList<String>> dataTable = subList
             .stream().map(strs -> {
               try {
-                return com.simiacryptus.ref.wrappers.RefArrays.asList(strs[1], strs[0],
+                return RefArrays.asList(strs[1], strs[0],
                     SerialPrecision.Float.base64(languageTransform.apply(strs[2]).get()), strs[2]);
               } catch (Exception e) {
                 throw new RuntimeException(e);
               }
-            }).collect(com.simiacryptus.ref.wrappers.RefCollectors.toList());
+            }).collect(RefCollectors.toList());
         CharSequence data = dataTable.stream().map(s -> s.stream().reduce((a, b) -> a + "," + b).orElse(""))
             .reduce((a, b) -> a + "\n" + b).orElse("");
         FileUtils.write(indexFile, data, "UTF-8", true);
@@ -160,7 +163,7 @@ class TextClassificationDemo extends NotebookReportBase {
 
   @Test
   public void projector() throws IOException, URISyntaxException {
-    com.simiacryptus.ref.wrappers.RefList<String[]> rows = loadIndexFile();
+    RefList<String[]> rows = loadIndexFile();
 
     Function<Tensor, Tensor> tensorFunction;
     {
@@ -168,27 +171,27 @@ class TextClassificationDemo extends NotebookReportBase {
       tensorFunction = Tensor.select(coords);
     }
 
-    com.simiacryptus.ref.wrappers.RefMap<String, Tensor> tensorMap = rows.stream()
-        .collect(com.simiacryptus.ref.wrappers.RefCollectors.toMap(r -> r[3],
+    RefMap<String, Tensor> tensorMap = rows.stream()
+        .collect(RefCollectors.toMap(r -> r[3],
             r -> tensorFunction.apply(new Tensor(SerialPrecision.Float.parse(r[2]), featureDims))));
     ProjectorUtil.browseProjector(ProjectorUtil.publishProjector(tensorMap));
   }
 
   @Test
   public void trainModel() throws IOException {
-    com.simiacryptus.ref.wrappers.RefList<String[]> rows = loadIndexFile();
-    com.simiacryptus.ref.wrappers.RefMap<Integer, com.simiacryptus.ref.wrappers.RefMap<Integer, Tensor>> indexedData = toTensorMap(
+    RefList<String[]> rows = loadIndexFile();
+    RefMap<Integer, RefMap<Integer, Tensor>> indexedData = toTensorMap(
         rows, featureDims);
     Tuple2<PipelineNetwork, SerializableFunction<Tensor, Tensor>> tuple2 = ClassifyUtil.buildClassifier(
-        ClassifyUtil.mapValues(indexedData, entry -> new com.simiacryptus.ref.wrappers.RefArrayList<>(entry.values())));
+        ClassifyUtil.mapValues(indexedData, entry -> new RefArrayList<>(entry.values())));
     PipelineNetwork classfier = tuple2._1;
-    com.simiacryptus.ref.wrappers.RefList<Tensor[]> indexData = rows.stream().map(e -> {
+    RefList<Tensor[]> indexData = rows.stream().map(e -> {
       return new Tensor[]{new Tensor(2).set(Integer.parseInt(e[0]), 1),
           tuple2._2.apply(new Tensor(SerialPrecision.Float.parse(e[2]), featureDims))};
-    }).collect(com.simiacryptus.ref.wrappers.RefCollectors.toList());
+    }).collect(RefCollectors.toList());
     classfier.add(pretrain(classfier, indexData));
     classfier.add(new SoftmaxLayer());
-    Tensor[][] trainingData = com.simiacryptus.ref.wrappers.RefIntStream.range(0, indexData.size())
+    Tensor[][] trainingData = RefIntStream.range(0, indexData.size())
         .mapToObj(i -> new Tensor[]{indexData.get(i)[1], indexData.get(i)[0]}).toArray(i -> new Tensor[i][]);
     double trainingResult = new IterativeTrainer(
         new ArrayTrainable(trainingData, new SimpleLossNetwork(classfier, new EntropyLossLayer()), 1000))
@@ -201,16 +204,16 @@ class TextClassificationDemo extends NotebookReportBase {
   public void testModel() throws IOException {
     Layer classifier = Layer.fromZip(new ZipFile(new File(base, "model.zip")));
     File file = new File(base, "holdout.csv");
-    com.simiacryptus.ref.wrappers.RefList<String[]> rows = com.simiacryptus.ref.wrappers.RefArrays
+    RefList<String[]> rows = RefArrays
         .stream(FileUtils.readFileToString(file, "UTF-8").split("\n")).map(s -> s.split(",", 3))
         //.limit(10)
-        .collect(com.simiacryptus.ref.wrappers.RefCollectors.toList());
+        .collect(RefCollectors.toList());
     @NotNull
     Function<String, Future<Tensor>> languageTransform = ClassifyUtil.getLanguageTransform(1);
     int batchSize = 10;
     for (int startRow = 1; startRow < rows.size(); startRow += batchSize) {
       logger.info("Processing rows from " + startRow);
-      com.simiacryptus.ref.wrappers.RefList<String[]> subList = rows.subList(startRow,
+      RefList<String[]> subList = rows.subList(startRow,
           Math.min(rows.size(), startRow + batchSize));
       TimedResult<String> time = TimedResult.time(() -> {
         Tensor[][] evalData = subList.stream().map((String[] strs) -> {
@@ -225,14 +228,14 @@ class TextClassificationDemo extends NotebookReportBase {
         }).toArray(i -> new Tensor[i][]);
 
         EntropyLossLayer entropyLossLayer = new EntropyLossLayer();
-        double totalEntropy = com.simiacryptus.ref.wrappers.RefArrays.stream(evalData).mapToDouble(row -> {
+        double totalEntropy = RefArrays.stream(evalData).mapToDouble(row -> {
           return entropyLossLayer.eval(row[2], row[0]).getData().get(0).get(0);
         }).sum();
-        double accuracy = com.simiacryptus.ref.wrappers.RefArrays.stream(evalData).mapToDouble(row -> {
+        double accuracy = RefArrays.stream(evalData).mapToDouble(row -> {
           Tensor prediction = row[2];
           Tensor category = row[0];
           int index = prediction.coordStream(false)
-              .sorted(com.simiacryptus.ref.wrappers.RefComparator.comparing(c -> -prediction.get(c))).findFirst().get()
+              .sorted(RefComparator.comparing(c -> -prediction.get(c))).findFirst().get()
               .getIndex();
           return category.get(index);
         }).average().getAsDouble();
@@ -256,11 +259,11 @@ class TextClassificationDemo extends NotebookReportBase {
 
   @NotNull
   protected LinearActivationLayer pretrain(PipelineNetwork classfier,
-                                           com.simiacryptus.ref.wrappers.RefList<Tensor[]> indexData) {
+                                           RefList<Tensor[]> indexData) {
     LinearActivationLayer activationLayer = new LinearActivationLayer().setScale(-1e-9).setBias(0);
-    com.simiacryptus.ref.wrappers.RefList<Tensor> preEval = classfier
-        .map(indexData.stream().map(x -> x[1]).collect(com.simiacryptus.ref.wrappers.RefCollectors.toList()));
-    Tensor[][] trainingData = com.simiacryptus.ref.wrappers.RefIntStream.range(0, indexData.size())
+    RefList<Tensor> preEval = classfier
+        .map(indexData.stream().map(x -> x[1]).collect(RefCollectors.toList()));
+    Tensor[][] trainingData = RefIntStream.range(0, indexData.size())
         .mapToObj(i -> new Tensor[]{preEval.get(i), indexData.get(i)[0]}).toArray(i -> new Tensor[i][]);
     double trainingResult = new IterativeTrainer(new ArrayTrainable(trainingData, new SimpleLossNetwork(
         PipelineNetwork.build(1, activationLayer.addRef(), new SoftmaxLayer()), new EntropyLossLayer())))
@@ -269,10 +272,10 @@ class TextClassificationDemo extends NotebookReportBase {
     return activationLayer;
   }
 
-  protected com.simiacryptus.ref.wrappers.RefList<String[]> loadIndexFile() throws IOException {
+  protected RefList<String[]> loadIndexFile() throws IOException {
     File file = new File(base, "index.csv");
     return FileUtils.readLines(file, "UTF-8").stream().map(s -> s.split(",", 4))
-        .collect(com.simiacryptus.ref.wrappers.RefCollectors.toList());
+        .collect(RefCollectors.toList());
   }
 
 }

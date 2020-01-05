@@ -20,6 +20,9 @@
 package com.simiacryptus.text.gpt2;
 
 import com.simiacryptus.mindseye.test.NotebookReportBase;
+import com.simiacryptus.ref.lang.RefAware;
+import com.simiacryptus.ref.wrappers.RefArrays;
+import com.simiacryptus.ref.wrappers.RefIntStream;
 import com.simiacryptus.text.MinEntropyWrapper;
 import com.simiacryptus.text.TemperatureWrapper;
 import com.simiacryptus.text.TextGenerator;
@@ -33,10 +36,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public @com.simiacryptus.ref.lang.RefAware
+public @RefAware
 class TextGenerationDemo extends NotebookReportBase {
   public static final String[] seeds_quotes = {
       "\"The greatest glory in living lies not in never falling, but in rising every time we fall.\" -Nelson Mandela",
@@ -71,7 +75,7 @@ class TextGenerationDemo extends NotebookReportBase {
   TextGenerationDemo[] addRefs(TextGenerationDemo[] array) {
     if (array == null)
       return null;
-    return java.util.Arrays.stream(array).filter((x) -> x != null).map(TextGenerationDemo::addRef)
+    return Arrays.stream(array).filter((x) -> x != null).map(TextGenerationDemo::addRef)
         .toArray((x) -> new TextGenerationDemo[x]);
   }
 
@@ -79,7 +83,7 @@ class TextGenerationDemo extends NotebookReportBase {
   TextGenerationDemo[][] addRefs(TextGenerationDemo[][] array) {
     if (array == null)
       return null;
-    return java.util.Arrays.stream(array).filter((x) -> x != null).map(TextGenerationDemo::addRefs)
+    return Arrays.stream(array).filter((x) -> x != null).map(TextGenerationDemo::addRefs)
         .toArray((x) -> new TextGenerationDemo[x][]);
   }
 
@@ -104,7 +108,7 @@ class TextGenerationDemo extends NotebookReportBase {
         textGenerator = GPT2Util.getTextGenerator(
             GPT2Util.getTextGenerator("\\w\\s\\.\\;\\,\\'\\\"\\-\\(\\)\\d\\n",
                 new URI("http://www.mit.edu/~ecprice/wordlist.10000")),
-            com.simiacryptus.ref.wrappers.RefArrays.copyOf(seeds_fables, 2));
+            RefArrays.copyOf(seeds_fables, 2));
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -117,7 +121,7 @@ class TextGenerationDemo extends NotebookReportBase {
           String headline = copy.generate(s -> s.length() < 10 || !s.endsWith("\n")).replace('\n', ' ').trim();
           log.h1(headline);
           log.p(headline + " "
-              + com.simiacryptus.ref.wrappers.RefIntStream.range(0, 15)
+              + RefIntStream.range(0, 15)
               .mapToObj(j -> copy.generate(s -> s.length() < 32
                   || (s.length() < 500 && !s.endsWith(".") && !s.contains(". ") && !s.contains("\n"))))
               .map(x -> x.replace('\n', ' ').trim()).reduce((a, b) -> a + " " + b).orElse(""));
@@ -147,7 +151,7 @@ class TextGenerationDemo extends NotebookReportBase {
         String headline = copy.generate(s -> s.length() < 10 || !s.endsWith("\n")).replace('\n', ' ').trim();
         log.h1(headline);
         log.p(headline + " "
-            + com.simiacryptus.ref.wrappers.RefIntStream.range(0, 15)
+            + RefIntStream.range(0, 15)
             .mapToObj(j -> copy.generate(s -> s.length() < 32
                 || (s.length() < 500 && !s.endsWith(".") && !s.contains(". ") && !s.contains("\n"))))
             .map(x -> x.replace('\n', ' ').trim()).reduce((a, b) -> a + " " + b).orElse(""));
@@ -202,7 +206,7 @@ class TextGenerationDemo extends NotebookReportBase {
         new URI("http://www.mit.edu/~ecprice/wordlist.10000"));
     run(log -> {
       try {
-        com.simiacryptus.ref.wrappers.RefArrays.stream(IOUtils.toString(new URI(url), "UTF-8").split("\n"))
+        RefArrays.stream(IOUtils.toString(new URI(url), "UTF-8").split("\n"))
             .filter(x -> !x.trim().startsWith("/") && !x.trim().startsWith("*") && !x.trim().startsWith("import")
                 && !x.trim().isEmpty())
             .forEach(line -> {

@@ -27,6 +27,8 @@ import com.simiacryptus.mindseye.lang.tensorflow.TFIO;
 import com.simiacryptus.mindseye.layers.java.*;
 import com.simiacryptus.mindseye.network.DAGNode;
 import com.simiacryptus.mindseye.network.PipelineNetwork;
+import com.simiacryptus.ref.lang.RefAware;
+import com.simiacryptus.ref.wrappers.*;
 import com.simiacryptus.text.gpt2.GPT2Codec;
 import com.simiacryptus.text.gpt2.GPT2Model;
 import com.simiacryptus.text.gpt2.GPT2Util;
@@ -40,7 +42,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Function;
 
-public @com.simiacryptus.ref.lang.RefAware
+public @RefAware
 class ClassifyUtil {
 
   protected static final Logger logger = LoggerFactory.getLogger(ClassifyUtil.class);
@@ -66,7 +68,7 @@ class ClassifyUtil {
       LanguageCodeModel copy = gpt2.copy();
       double[] entropies = codec.encode(row).stream().mapToDouble(code -> {
         float[] prediction = copy.eval(code);
-        return com.simiacryptus.ref.wrappers.RefIntStream.range(0, prediction.length).mapToDouble(i -> prediction[i])
+        return RefIntStream.range(0, prediction.length).mapToDouble(i -> prediction[i])
             .map(x -> x * Math.log(x)).sum() / Math.log(2);
       }).toArray();
       Tensor state = TFIO.getTensor(copy.state());
@@ -79,16 +81,16 @@ class ClassifyUtil {
     });
   }
 
-  public static <K, V, U> com.simiacryptus.ref.wrappers.RefMap<K, U> mapValues(
-      com.simiacryptus.ref.wrappers.RefMap<K, V> indexedData, Function<V, U> fn) {
+  public static <K, V, U> RefMap<K, U> mapValues(
+      RefMap<K, V> indexedData, Function<V, U> fn) {
     return indexedData.entrySet().stream()
-        .collect(com.simiacryptus.ref.wrappers.RefCollectors.toMap(e -> e.getKey(), e -> fn.apply(e.getValue())));
+        .collect(RefCollectors.toMap(e -> e.getKey(), e -> fn.apply(e.getValue())));
   }
 
   @NotNull
   public static Tuple2<PipelineNetwork, SerializableFunction<Tensor, Tensor>> buildClassifier(
-      com.simiacryptus.ref.wrappers.RefMap<? extends Integer, ? extends com.simiacryptus.ref.wrappers.RefCollection<? extends Tensor>> collect) {
-    com.simiacryptus.ref.wrappers.RefMap<? extends Integer, ? extends TensorStats> statsMap = mapValues(collect,
+      RefMap<? extends Integer, ? extends RefCollection<? extends Tensor>> collect) {
+    RefMap<? extends Integer, ? extends TensorStats> statsMap = mapValues(collect,
         entry -> TensorStats.create(entry));
     statsMap.values().forEach(tensorStats -> {
       logger.debug("Averages Histogram: " + JsonUtil.toJson(getHistogramList(tensorStats.avg.getData(), 10, 10)));
@@ -102,8 +104,8 @@ class ClassifyUtil {
       SerializableFunction<Tensor, Tensor> tensorFunction = Tensor
           .select(mostSignifigantCoords(statsMap.get(primaryKey), statsMap.get(secondaryKey), maxDims));
       Tuple2<PipelineNetwork, SerializableFunction<Tensor, Tensor>> subClassifier = buildClassifier(
-          mapValues(collect, values -> new com.simiacryptus.ref.wrappers.RefArrayList<>(
-              values.stream().map(tensorFunction).collect(com.simiacryptus.ref.wrappers.RefCollectors.toList()))));
+          mapValues(collect, values -> new RefArrayList<>(
+              values.stream().map(tensorFunction).collect(RefCollectors.toList()))));
       return new Tuple2<>(subClassifier._1, x -> subClassifier._2.apply(tensorFunction.apply(x)));
     } else {
       return new Tuple2<>(buildClassifierFromStats(statsMap), x -> x);
@@ -112,10 +114,10 @@ class ClassifyUtil {
 
   @NotNull
   public static PipelineNetwork buildClassifierFromStats(
-      com.simiacryptus.ref.wrappers.RefMap<? extends Integer, ? extends TensorStats> statsMap) {
+      RefMap<? extends Integer, ? extends TensorStats> statsMap) {
     int[] dimensions = statsMap.values().stream().findAny().get().avg.getDimensions();
-    com.simiacryptus.ref.wrappers.RefMap<Integer, PipelineNetwork> networks = statsMap.entrySet().stream()
-        .collect(com.simiacryptus.ref.wrappers.RefCollectors.toMap(e -> e.getKey(), entry -> {
+    RefMap<Integer, PipelineNetwork> networks = statsMap.entrySet().stream()
+        .collect(RefCollectors.toMap(e -> e.getKey(), entry -> {
           TensorStats tensorStats = entry.getValue();
           PipelineNetwork net = new PipelineNetwork(1);
           net.add(new ProductInputsLayer(),
@@ -135,7 +137,7 @@ class ClassifyUtil {
   }
 
   public static Coordinate[] mostSignifigantCoords(TensorStats a, TensorStats b, int n) {
-    return a.avg.coordStream(true).sorted(com.simiacryptus.ref.wrappers.RefComparator.comparing(c -> {
+    return a.avg.coordStream(true).sorted(RefComparator.comparing(c -> {
       double avgA = a.avg.get(c);
       double avgB = b.avg.get(c);
       double stddevA = a.scale.get(c);
@@ -145,19 +147,19 @@ class ClassifyUtil {
     })).limit(n).toArray(i -> new Coordinate[i]);
   }
 
-  public static com.simiacryptus.ref.wrappers.RefList<String> getHistogramList(double[] data, int granularity,
-                                                                               int base) {
+  public static RefList<String> getHistogramList(double[] data, int granularity,
+                                                 int base) {
     return getHistogram(data, granularity, base).entrySet().stream()
-        .sorted(com.simiacryptus.ref.wrappers.RefComparator.comparing(x -> x.getKey()))
+        .sorted(RefComparator.comparing(x -> x.getKey()))
         .map(x -> String.format("%s=%s", x.getKey(), x.getValue()))
-        .collect(com.simiacryptus.ref.wrappers.RefCollectors.toList());
+        .collect(RefCollectors.toList());
   }
 
-  protected static com.simiacryptus.ref.wrappers.RefMap<Double, Long> getHistogram(double[] data, int granularity,
-                                                                                   int base) {
-    return com.simiacryptus.ref.wrappers.RefArrays.stream(data).mapToObj(x -> {
+  protected static RefMap<Double, Long> getHistogram(double[] data, int granularity,
+                                                     int base) {
+    return RefArrays.stream(data).mapToObj(x -> {
       return Math.exp(Math.log(base) * Math.round(granularity * Math.log(x) / Math.log(base)) / granularity);
-    }).collect(com.simiacryptus.ref.wrappers.RefCollectors.groupingBy(x -> x,
-        com.simiacryptus.ref.wrappers.RefCollectors.counting()));
+    }).collect(RefCollectors.groupingBy(x -> x,
+        RefCollectors.counting()));
   }
 }
