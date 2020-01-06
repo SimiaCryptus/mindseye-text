@@ -151,7 +151,7 @@ class ClassifyUtil {
                                                  int base) {
     return getHistogram(data, granularity, base).entrySet().stream()
         .sorted(RefComparator.comparing(x -> x.getKey()))
-        .map(x -> String.format("%s=%s", x.getKey(), x.getValue()))
+        .map(x -> RefString.format("%s=%s", x.getKey(), x.getValue()))
         .collect(RefCollectors.toList());
   }
 

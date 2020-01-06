@@ -156,7 +156,7 @@ class TextClassificationDemo extends NotebookReportBase {
         FileUtils.write(indexFile, data, "UTF-8", true);
       });
       logger.info("Wrote in " + time.seconds());
-      System.gc();
+      com.simiacryptus.ref.wrappers.RefSystem.gc();
     }
 
   }
@@ -196,7 +196,7 @@ class TextClassificationDemo extends NotebookReportBase {
     double trainingResult = new IterativeTrainer(
         new ArrayTrainable(trainingData, new SimpleLossNetwork(classfier, new EntropyLossLayer()), 1000))
         .setMaxIterations(100).setTimeout(5, TimeUnit.MINUTES).run();
-    logger.info(String.format("Training Result: %s", trainingResult));
+    logger.info(RefString.format("Training Result: %s", trainingResult));
     classfier.writeZip(new File(base, "model.zip"));
   }
 
@@ -239,11 +239,11 @@ class TextClassificationDemo extends NotebookReportBase {
               .getIndex();
           return category.get(index);
         }).average().getAsDouble();
-        return String.format("accuracy=%s; entropy=%s", accuracy, totalEntropy);
+        return RefString.format("accuracy=%s; entropy=%s", accuracy, totalEntropy);
       });
-      logger.info(String.format("Processed rows %s-%s in %s: %s", startRow, startRow + subList.size(), time.seconds(),
+      logger.info(RefString.format("Processed rows %s-%s in %s: %s", startRow, startRow + subList.size(), time.seconds(),
           time.result));
-      System.gc();
+      com.simiacryptus.ref.wrappers.RefSystem.gc();
     }
   }
 
@@ -268,7 +268,7 @@ class TextClassificationDemo extends NotebookReportBase {
     double trainingResult = new IterativeTrainer(new ArrayTrainable(trainingData, new SimpleLossNetwork(
         PipelineNetwork.build(1, activationLayer.addRef(), new SoftmaxLayer()), new EntropyLossLayer())))
         .setMaxIterations(100).setTimeout(5, TimeUnit.MINUTES).run();
-    logger.info(String.format("Training Result: %s", trainingResult));
+    logger.info(RefString.format("Training Result: %s", trainingResult));
     return activationLayer;
   }
 

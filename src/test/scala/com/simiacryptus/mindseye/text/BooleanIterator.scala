@@ -62,7 +62,7 @@ import com.simiacryptus.mindseye.text.TextClassifyUtil._
 
 object BooleanIterator_EC2 extends BooleanIterator with EC2Runner[Object] with AWSNotebookRunner[Object] {
 
-  override def urlBase: String = String.format("http://%s:1080/etc/", InetAddress.getLocalHost.getHostAddress)
+  override def urlBase: String = com.simiacryptus.ref.wrappers.RefString.format("http://%s:1080/etc/", InetAddress.getLocalHost.getHostAddress)
 
   override def inputTimeoutSeconds = 600
 

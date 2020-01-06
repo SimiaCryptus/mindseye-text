@@ -23,6 +23,7 @@ import com.simiacryptus.mindseye.test.NotebookReportBase;
 import com.simiacryptus.ref.lang.RefAware;
 import com.simiacryptus.ref.wrappers.RefArrays;
 import com.simiacryptus.ref.wrappers.RefIntStream;
+import com.simiacryptus.ref.wrappers.RefString;
 import com.simiacryptus.text.MinEntropyWrapper;
 import com.simiacryptus.text.TemperatureWrapper;
 import com.simiacryptus.text.TextGenerator;
@@ -183,7 +184,7 @@ class TextGenerationDemo extends NotebookReportBase {
           String line = matcher.group(1).trim();
           log.h3(line);
           double totalEntropy = textGenerator.feed(line);
-          log.p(String.format("%.3f bits, %.3f bits per word, %.3f bits per character", totalEntropy,
+          log.p(RefString.format("%.3f bits, %.3f bits per word, %.3f bits per character", totalEntropy,
               totalEntropy / line.split("\\s+").length, totalEntropy / line.length()));
           for (int i = 0; i < 5; i++) {
             TextGenerator copy = textGenerator.copy();
@@ -212,7 +213,7 @@ class TextGenerationDemo extends NotebookReportBase {
             .forEach(line -> {
               log.h3(line);
               double totalEntropy = textGenerator.feed(line);
-              log.p(String.format("%.3f bits, %.3f bits per word, %.3f bits per character", totalEntropy,
+              log.p(RefString.format("%.3f bits, %.3f bits per word, %.3f bits per character", totalEntropy,
                   totalEntropy / line.split("\\s+").length, totalEntropy / line.length()));
               for (int i = 0; i < 5; i++) {
                 TextGenerator copy = textGenerator.copy();

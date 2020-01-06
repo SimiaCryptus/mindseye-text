@@ -21,6 +21,7 @@ package com.simiacryptus.text;
 
 import com.simiacryptus.ref.lang.RefAware;
 import com.simiacryptus.ref.wrappers.RefArrays;
+import com.simiacryptus.ref.wrappers.RefString;
 import com.simiacryptus.text.gpt2.GPT2Util;
 import com.simiacryptus.util.test.SysOutInterceptor;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +61,7 @@ class ChatBot {
   public static void main(String[] args) throws Exception {
     PrintStream out = SysOutInterceptor.ORIGINAL_OUT;
     ChatBot chatBot = new ChatBot();
-    Scanner scanner = new Scanner(System.in);
+    Scanner scanner = new Scanner(com.simiacryptus.ref.wrappers.RefSystem.in);
 
     while (true) {
       try {
@@ -93,27 +94,27 @@ class ChatBot {
         if (split[0].toLowerCase().startsWith("temp")) {
           temperature = Double.parseDouble(split[1]);
           textGenerator = init();
-          return String.format("Temp=%s; AI State Reset", temperature);
+          return RefString.format("Temp=%s; AI State Reset", temperature);
         } else if (split[0].toLowerCase().startsWith("ent")) {
           minEntropy = Double.parseDouble(split[1]);
           textGenerator = init();
-          return String.format("minEntropy=%s; AI State Reset", minEntropy);
+          return RefString.format("minEntropy=%s; AI State Reset", minEntropy);
         } else if (split[0].toLowerCase().equals("verbose")) {
           verbose = Boolean.parseBoolean(split[1]);
           textGenerator = init();
-          return String.format("verbose=%s; AI State Reset", verbose);
+          return RefString.format("verbose=%s; AI State Reset", verbose);
         } else if (split[0].toLowerCase().startsWith("choice")) {
           choicesToLog = Integer.parseInt(split[1]);
           textGenerator = init();
-          return String.format("choicesToLog=%s; AI State Reset", choicesToLog);
+          return RefString.format("choicesToLog=%s; AI State Reset", choicesToLog);
         } else if (split[0].toLowerCase().startsWith("length")) {
           maxLength = Integer.parseInt(split[1]);
           textGenerator = init();
-          return String.format("maxLength=%s; AI State Reset", maxLength);
+          return RefString.format("maxLength=%s; AI State Reset", maxLength);
         } else if (split[0].toLowerCase().startsWith("wordlist")) {
           wordlist = (split[1]);
           textGenerator = init();
-          return String.format("maxLength=%s; AI State Reset", wordlist);
+          return RefString.format("maxLength=%s; AI State Reset", wordlist);
         }
 
     }
