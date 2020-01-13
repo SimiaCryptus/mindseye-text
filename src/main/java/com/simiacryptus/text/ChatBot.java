@@ -37,8 +37,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Scanner;
 import java.util.function.BiFunction;
 
-public @RefAware
-class ChatBot {
+public class ChatBot {
   protected static final Logger logger = LoggerFactory.getLogger(ChatBot.class);
   private final TextGenerator root;
   private final String characterWhitelist = "a-zA-Z01-9,.'\"\\!\\@\\$\\&\\*\\(\\)\\#\\-\\=\\+/";
@@ -46,7 +45,7 @@ class ChatBot {
   private String wordlist = ""; //"http://www.mit.edu/~ecprice/wordlist.10000";
   private double temperature = 1.0;
   private double minEntropy = 1e-1;
-  private String[] seeds = new String[]{""};
+  private String[] seeds = new String[] { "" };
   private boolean verbose = false;
   private int choicesToLog = 5;
   private int maxLength = 64;
@@ -136,7 +135,7 @@ class ChatBot {
     TextGenerator textGenerator = GPT2Util.getTextGenerator(root.copy(), characterWhitelist,
         (null == wordlist || wordlist.isEmpty()) ? null : new URI(wordlist));
     textGenerator = GPT2Util.getTextGenerator(textGenerator, RefArrays.asList(
-        //            SimpleModel.build(GPT2Util.getCodec_345M(), IOUtils.toString(new URI("http://classics.mit.edu/Aesop/fab.mb.txt"), "UTF-8"))
+    //            SimpleModel.build(GPT2Util.getCodec_345M(), IOUtils.toString(new URI("http://classics.mit.edu/Aesop/fab.mb.txt"), "UTF-8"))
     ), seeds);
     textGenerator.setVerbose(verbose);
     textGenerator.setChoicesToLog(choicesToLog);

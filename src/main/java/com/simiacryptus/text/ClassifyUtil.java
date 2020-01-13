@@ -28,6 +28,7 @@ import com.simiacryptus.mindseye.layers.java.*;
 import com.simiacryptus.mindseye.network.DAGNode;
 import com.simiacryptus.mindseye.network.PipelineNetwork;
 import com.simiacryptus.ref.lang.RefAware;
+import com.simiacryptus.ref.lang.RefUtil;
 import com.simiacryptus.ref.wrappers.*;
 import com.simiacryptus.text.gpt2.GPT2Codec;
 import com.simiacryptus.text.gpt2.GPT2Model;
@@ -42,8 +43,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.Function;
 
-public @RefAware
-class ClassifyUtil {
+public class ClassifyUtil {
 
   protected static final Logger logger = LoggerFactory.getLogger(ClassifyUtil.class);
 
@@ -68,8 +68,8 @@ class ClassifyUtil {
       LanguageCodeModel copy = gpt2.copy();
       double[] entropies = codec.encode(row).stream().mapToDouble(code -> {
         float[] prediction = copy.eval(code);
-        return RefIntStream.range(0, prediction.length).mapToDouble(i -> prediction[i])
-            .map(x -> x * Math.log(x)).sum() / Math.log(2);
+        return RefIntStream.range(0, prediction.length).mapToDouble(i -> prediction[i]).map(x -> x * Math.log(x)).sum()
+            / Math.log(2);
       }).toArray();
       Tensor state = TFIO.getTensor(copy.state());
       int slice = state.getDimensions()[4] - 1;
@@ -81,17 +81,14 @@ class ClassifyUtil {
     });
   }
 
-  public static <K, V, U> RefMap<K, U> mapValues(
-      RefMap<K, V> indexedData, Function<V, U> fn) {
-    return indexedData.entrySet().stream()
-        .collect(RefCollectors.toMap(e -> e.getKey(), e -> fn.apply(e.getValue())));
+  public static <K, V, U> RefMap<K, U> mapValues(RefMap<K, V> indexedData, Function<V, U> fn) {
+    return indexedData.entrySet().stream().collect(RefCollectors.toMap(e -> e.getKey(), e -> fn.apply(e.getValue())));
   }
 
   @NotNull
   public static Tuple2<PipelineNetwork, SerializableFunction<Tensor, Tensor>> buildClassifier(
       RefMap<? extends Integer, ? extends RefCollection<? extends Tensor>> collect) {
-    RefMap<? extends Integer, ? extends TensorStats> statsMap = mapValues(collect,
-        entry -> TensorStats.create(entry));
+    RefMap<? extends Integer, ? extends TensorStats> statsMap = mapValues(collect, entry -> TensorStats.create(entry));
     statsMap.values().forEach(tensorStats -> {
       logger.debug("Averages Histogram: " + JsonUtil.toJson(getHistogramList(tensorStats.avg.getData(), 10, 10)));
       logger.debug("Scales Histogram: " + JsonUtil.toJson(getHistogramList(tensorStats.scale.getData(), 10, 10)));
@@ -103,9 +100,8 @@ class ClassifyUtil {
     if (Tensor.length(dimensions) > maxDims) {
       SerializableFunction<Tensor, Tensor> tensorFunction = Tensor
           .select(mostSignifigantCoords(statsMap.get(primaryKey), statsMap.get(secondaryKey), maxDims));
-      Tuple2<PipelineNetwork, SerializableFunction<Tensor, Tensor>> subClassifier = buildClassifier(
-          mapValues(collect, values -> new RefArrayList<>(
-              values.stream().map(tensorFunction).collect(RefCollectors.toList()))));
+      Tuple2<PipelineNetwork, SerializableFunction<Tensor, Tensor>> subClassifier = buildClassifier(mapValues(collect,
+          values -> new RefArrayList<>(values.stream().map(tensorFunction).collect(RefCollectors.toList()))));
       return new Tuple2<>(subClassifier._1, x -> subClassifier._2.apply(tensorFunction.apply(x)));
     } else {
       return new Tuple2<>(buildClassifierFromStats(statsMap), x -> x);
@@ -113,9 +109,8 @@ class ClassifyUtil {
   }
 
   @NotNull
-  public static PipelineNetwork buildClassifierFromStats(
-      RefMap<? extends Integer, ? extends TensorStats> statsMap) {
-    int[] dimensions = statsMap.values().stream().findAny().get().avg.getDimensions();
+  public static PipelineNetwork buildClassifierFromStats(RefMap<? extends Integer, ? extends TensorStats> statsMap) {
+    int[] dimensions = RefUtil.get(statsMap.values().stream().findAny()).avg.getDimensions();
     RefMap<Integer, PipelineNetwork> networks = statsMap.entrySet().stream()
         .collect(RefCollectors.toMap(e -> e.getKey(), entry -> {
           TensorStats tensorStats = entry.getValue();
@@ -147,19 +142,14 @@ class ClassifyUtil {
     })).limit(n).toArray(i -> new Coordinate[i]);
   }
 
-  public static RefList<String> getHistogramList(double[] data, int granularity,
-                                                 int base) {
-    return getHistogram(data, granularity, base).entrySet().stream()
-        .sorted(RefComparator.comparing(x -> x.getKey()))
-        .map(x -> RefString.format("%s=%s", x.getKey(), x.getValue()))
-        .collect(RefCollectors.toList());
+  public static RefList<String> getHistogramList(double[] data, int granularity, int base) {
+    return getHistogram(data, granularity, base).entrySet().stream().sorted(RefComparator.comparing(x -> x.getKey()))
+        .map(x -> RefString.format("%s=%s", x.getKey(), x.getValue())).collect(RefCollectors.toList());
   }
 
-  protected static RefMap<Double, Long> getHistogram(double[] data, int granularity,
-                                                     int base) {
+  protected static RefMap<Double, Long> getHistogram(double[] data, int granularity, int base) {
     return RefArrays.stream(data).mapToObj(x -> {
       return Math.exp(Math.log(base) * Math.round(granularity * Math.log(x) / Math.log(base)) / granularity);
-    }).collect(RefCollectors.groupingBy(x -> x,
-        RefCollectors.counting()));
+    }).collect(RefCollectors.groupingBy(x -> x, RefCollectors.counting()));
   }
 }

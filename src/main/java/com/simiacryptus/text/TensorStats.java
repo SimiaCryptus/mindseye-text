@@ -32,8 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 
-public @RefAware
-class TensorStats extends ReferenceCountingBase {
+public class TensorStats extends ReferenceCountingBase {
   protected static final Logger logger = LoggerFactory.getLogger(TensorStats.class);
   public BiasLayer biasLayer;
   public Tensor scale;
@@ -49,29 +48,22 @@ class TensorStats extends ReferenceCountingBase {
     return self;
   }
 
-  public static @SuppressWarnings("unused")
-  TensorStats[] addRefs(TensorStats[] array) {
+  public static @SuppressWarnings("unused") TensorStats[] addRefs(TensorStats[] array) {
     if (array == null)
       return null;
-    return Arrays.stream(array).filter((x) -> x != null).map(TensorStats::addRef)
-        .toArray((x) -> new TensorStats[x]);
+    return Arrays.stream(array).filter((x) -> x != null).map(TensorStats::addRef).toArray((x) -> new TensorStats[x]);
   }
 
-  public static @SuppressWarnings("unused")
-  TensorStats[][] addRefs(TensorStats[][] array) {
+  public static @SuppressWarnings("unused") TensorStats[][] addRefs(TensorStats[][] array) {
     if (array == null)
       return null;
-    return Arrays.stream(array).filter((x) -> x != null).map(TensorStats::addRefs)
-        .toArray((x) -> new TensorStats[x][]);
+    return Arrays.stream(array).filter((x) -> x != null).map(TensorStats::addRefs).toArray((x) -> new TensorStats[x][]);
   }
 
-  public @SuppressWarnings("unused")
-  void _free() {
+  public @SuppressWarnings("unused") void _free() {
   }
 
-  public @Override
-  @SuppressWarnings("unused")
-  TensorStats addRef() {
+  public @Override @SuppressWarnings("unused") TensorStats addRef() {
     return (TensorStats) super.addRef();
   }
 }

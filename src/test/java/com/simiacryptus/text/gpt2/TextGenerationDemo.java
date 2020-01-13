@@ -41,16 +41,15 @@ import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public @RefAware
-class TextGenerationDemo extends NotebookReportBase {
+public class TextGenerationDemo extends NotebookReportBase {
   public static final String[] seeds_quotes = {
       "\"The greatest glory in living lies not in never falling, but in rising every time we fall.\" -Nelson Mandela",
       "\"If life were predictable it would cease to be life, and be without flavor.\" -Eleanor Roosevelt",
-      "\"Life is what happens when you're busy making other plans.\" -John Lennon"};
-  public static final String[] seeds_headlines = {"Trump tariffs threaten to drown gains from tax cuts",
+      "\"Life is what happens when you're busy making other plans.\" -John Lennon" };
+  public static final String[] seeds_headlines = { "Trump tariffs threaten to drown gains from tax cuts",
       "SpaceX puts up 60 internet satellites", "Millions expected to hit the road for Memorial Day Weekend",
       "Food expiration labels are confusing and the FDA wants to change that",
-      "In our opinion: This is the making of a retirement crisis"};
+      "In our opinion: This is the making of a retirement crisis" };
   public static final String[] seeds_fables = {
       "Wolf, meeting with a Lamb astray from the fold, resolved not to lay violent hands on him, but to find some plea to justify to the Lamb the Wolf's right to eat him. He thus addressed him: \"Sirrah, last year you grossly insulted me.\" \"Indeed,\" bleated the Lamb in a mournful tone of voice, \"I was not then born.\" Then said the Wolf, \"You feed in my pasture.\" \"No, good sir,\" replied the Lamb, \"I have not yet tasted grass.\" Again said the Wolf, \"You drink of my well.\" \"No,\" exclaimed the Lamb, \"I never yet drank water, for as yet my mother's milk is both food and drink to me.\" Upon which the Wolf seized him and ate him up, saying, \"Well! I won't remain supperless, even though you refute every one of my imputations.\" The tyrant will always find a pretext for his tyranny.",
       "A Bat who fell upon the ground and was caught by a Weasel pleaded to be spared his life. The Weasel refused, saying that he was by nature the enemy of all birds. The Bat assured him that he was not a bird, but a mouse, and thus was set free. Shortly afterwards the Bat again fell to the ground and was caught by another Weasel, whom he likewise entreated not to eat him. The Weasel said that he had a special hostility to mice. The Bat assured him that he was not a mouse, but a bat, and thus a second time escaped.\nIt is wise to turn circumstances to good account.",
@@ -59,7 +58,7 @@ class TextGenerationDemo extends NotebookReportBase {
           + "\n"
           + "\"You ridiculed the idea of my ever being able to help you, expecting to receive from me any repayment of your favor; I now you know that it is possible for even a Mouse to con benefits on a Lion.\"",
       "A Charcoal-Burner carried on his trade in his own house. One day he met a friend, a Fuller, and entreated him to come and live with him, saying that they should be far better neighbors and that their housekeeping expenses would be lessened. The Fuller replied, \"The arrangement is impossible as far as I am concerned, for whatever I should whiten, you would immediately blacken again with your charcoal.\"\n"
-          + "\n" + "Like will draw like. "};
+          + "\n" + "Like will draw like. " };
 
   @Nonnull
   @Override
@@ -72,16 +71,14 @@ class TextGenerationDemo extends NotebookReportBase {
     return GPT2Model.class;
   }
 
-  public static @SuppressWarnings("unused")
-  TextGenerationDemo[] addRefs(TextGenerationDemo[] array) {
+  public static @SuppressWarnings("unused") TextGenerationDemo[] addRefs(TextGenerationDemo[] array) {
     if (array == null)
       return null;
     return Arrays.stream(array).filter((x) -> x != null).map(TextGenerationDemo::addRef)
         .toArray((x) -> new TextGenerationDemo[x]);
   }
 
-  public static @SuppressWarnings("unused")
-  TextGenerationDemo[][] addRefs(TextGenerationDemo[][] array) {
+  public static @SuppressWarnings("unused") TextGenerationDemo[][] addRefs(TextGenerationDemo[][] array) {
     if (array == null)
       return null;
     return Arrays.stream(array).filter((x) -> x != null).map(TextGenerationDemo::addRefs)
@@ -106,10 +103,8 @@ class TextGenerationDemo extends NotebookReportBase {
       int articles = 100;
       TextGenerator textGenerator = null;
       try {
-        textGenerator = GPT2Util.getTextGenerator(
-            GPT2Util.getTextGenerator("\\w\\s\\.\\;\\,\\'\\\"\\-\\(\\)\\d\\n",
-                new URI("http://www.mit.edu/~ecprice/wordlist.10000")),
-            RefArrays.copyOf(seeds_fables, 2));
+        textGenerator = GPT2Util.getTextGenerator(GPT2Util.getTextGenerator("\\w\\s\\.\\;\\,\\'\\\"\\-\\(\\)\\d\\n",
+            new URI("http://www.mit.edu/~ecprice/wordlist.10000")), RefArrays.copyOf(seeds_fables, 2));
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -123,9 +118,9 @@ class TextGenerationDemo extends NotebookReportBase {
           log.h1(headline);
           log.p(headline + " "
               + RefIntStream.range(0, 15)
-              .mapToObj(j -> copy.generate(s -> s.length() < 32
-                  || (s.length() < 500 && !s.endsWith(".") && !s.contains(". ") && !s.contains("\n"))))
-              .map(x -> x.replace('\n', ' ').trim()).reduce((a, b) -> a + " " + b).orElse(""));
+                  .mapToObj(j -> copy.generate(s -> s.length() < 32
+                      || (s.length() < 500 && !s.endsWith(".") && !s.contains(". ") && !s.contains("\n"))))
+                  .map(x -> x.replace('\n', ' ').trim()).reduce((a, b) -> a + " " + b).orElse(""));
         } catch (Throwable e) {
           logger.warn("Err", e);
         }
@@ -153,9 +148,9 @@ class TextGenerationDemo extends NotebookReportBase {
         log.h1(headline);
         log.p(headline + " "
             + RefIntStream.range(0, 15)
-            .mapToObj(j -> copy.generate(s -> s.length() < 32
-                || (s.length() < 500 && !s.endsWith(".") && !s.contains(". ") && !s.contains("\n"))))
-            .map(x -> x.replace('\n', ' ').trim()).reduce((a, b) -> a + " " + b).orElse(""));
+                .mapToObj(j -> copy.generate(s -> s.length() < 32
+                    || (s.length() < 500 && !s.endsWith(".") && !s.contains(". ") && !s.contains("\n"))))
+                .map(x -> x.replace('\n', ' ').trim()).reduce((a, b) -> a + " " + b).orElse(""));
       }
     });
   }
@@ -165,7 +160,7 @@ class TextGenerationDemo extends NotebookReportBase {
     TextGenerator textGenerator = GPT2Util.getTextGenerator("",
         //        "a-zA-Z01-9 ,;:\\-\\.\\!\\?",
         null
-        //        new URI("http://www.mit.edu/~ecprice/wordlist.10000")
+    //        new URI("http://www.mit.edu/~ecprice/wordlist.10000")
     );
     //    String url = "https://en.wikipedia.org/wiki/Special:Random";
     String url = "https://en.wikinews.org/wiki/Special:Random";
@@ -207,10 +202,8 @@ class TextGenerationDemo extends NotebookReportBase {
         new URI("http://www.mit.edu/~ecprice/wordlist.10000"));
     run(log -> {
       try {
-        RefArrays.stream(IOUtils.toString(new URI(url), "UTF-8").split("\n"))
-            .filter(x -> !x.trim().startsWith("/") && !x.trim().startsWith("*") && !x.trim().startsWith("import")
-                && !x.trim().isEmpty())
-            .forEach(line -> {
+        RefArrays.stream(IOUtils.toString(new URI(url), "UTF-8").split("\n")).filter(x -> !x.trim().startsWith("/")
+            && !x.trim().startsWith("*") && !x.trim().startsWith("import") && !x.trim().isEmpty()).forEach(line -> {
               log.h3(line);
               double totalEntropy = textGenerator.feed(line);
               log.p(RefString.format("%.3f bits, %.3f bits per word, %.3f bits per character", totalEntropy,
@@ -230,13 +223,10 @@ class TextGenerationDemo extends NotebookReportBase {
     });
   }
 
-  public @SuppressWarnings("unused")
-  void _free() {
+  public @SuppressWarnings("unused") void _free() {
   }
 
-  public @Override
-  @SuppressWarnings("unused")
-  TextGenerationDemo addRef() {
+  public @Override @SuppressWarnings("unused") TextGenerationDemo addRef() {
     return (TextGenerationDemo) super.addRef();
   }
 }

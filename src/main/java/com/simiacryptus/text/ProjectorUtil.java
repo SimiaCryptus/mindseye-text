@@ -43,8 +43,7 @@ import java.net.URLEncoder;
 import java.util.Map;
 import java.util.UUID;
 
-public @RefAware
-class ProjectorUtil {
+public class ProjectorUtil {
 
   public static void browseProjector(URL configUrl) throws IOException, URISyntaxException {
     //Desktop.getDesktop().browse(configUrl.toURI());
@@ -59,16 +58,13 @@ class ProjectorUtil {
     return configUrl;
   }
 
-  public static URL publishProjector(RefMap<String, Tensor> vectors, AmazonS3 s3)
-      throws IOException {
+  public static URL publishProjector(RefMap<String, Tensor> vectors, AmazonS3 s3) throws IOException {
     String id = UUID.randomUUID().toString();
     return publishProjector(vectors, s3, id);
   }
 
-  public static URL publishProjector(RefMap<String, Tensor> vectors, AmazonS3 s3,
-                                     String id) throws IOException {
-    RefList<Map.Entry<String, Tensor>> entries = vectors.entrySet().stream()
-        .collect(RefCollectors.toList());
+  public static URL publishProjector(RefMap<String, Tensor> vectors, AmazonS3 s3, String id) throws IOException {
+    RefList<Map.Entry<String, Tensor>> entries = vectors.entrySet().stream().collect(RefCollectors.toList());
     int reducedDims = entries.get(0).getValue().getData().length;
 
     String tensorsSrc = entries.stream().map(entry -> {
