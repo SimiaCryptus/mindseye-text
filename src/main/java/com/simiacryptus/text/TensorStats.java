@@ -24,21 +24,24 @@ import com.simiacryptus.mindseye.layers.java.BiasLayer;
 import com.simiacryptus.mindseye.layers.java.NthPowerActivationLayer;
 import com.simiacryptus.mindseye.network.PipelineNetwork;
 import com.simiacryptus.mindseye.test.TestUtil;
-import com.simiacryptus.ref.lang.RefAware;
 import com.simiacryptus.ref.lang.ReferenceCountingBase;
 import com.simiacryptus.ref.wrappers.RefCollection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.Arrays;
 
 public class TensorStats extends ReferenceCountingBase {
   protected static final Logger logger = LoggerFactory.getLogger(TensorStats.class);
   public BiasLayer biasLayer;
+  @Nullable
   public Tensor scale;
   public Tensor avg;
 
-  public static TensorStats create(RefCollection<? extends Tensor> values) {
+  @Nonnull
+  public static TensorStats create(@Nonnull RefCollection<? extends Tensor> values) {
     TensorStats self = new TensorStats();
     self.avg = TestUtil.avg(values);
     self.biasLayer = new BiasLayer(self.avg.getDimensions()).set(self.avg.scaleInPlace(-1));
@@ -48,22 +51,30 @@ public class TensorStats extends ReferenceCountingBase {
     return self;
   }
 
-  public static @SuppressWarnings("unused") TensorStats[] addRefs(TensorStats[] array) {
+  @Nullable
+  public static @SuppressWarnings("unused")
+  TensorStats[] addRefs(@Nullable TensorStats[] array) {
     if (array == null)
       return null;
     return Arrays.stream(array).filter((x) -> x != null).map(TensorStats::addRef).toArray((x) -> new TensorStats[x]);
   }
 
-  public static @SuppressWarnings("unused") TensorStats[][] addRefs(TensorStats[][] array) {
+  @Nullable
+  public static @SuppressWarnings("unused")
+  TensorStats[][] addRefs(@Nullable TensorStats[][] array) {
     if (array == null)
       return null;
     return Arrays.stream(array).filter((x) -> x != null).map(TensorStats::addRefs).toArray((x) -> new TensorStats[x][]);
   }
 
-  public @SuppressWarnings("unused") void _free() {
+  public @SuppressWarnings("unused")
+  void _free() {
   }
 
-  public @Override @SuppressWarnings("unused") TensorStats addRef() {
+  @Nonnull
+  public @Override
+  @SuppressWarnings("unused")
+  TensorStats addRef() {
     return (TensorStats) super.addRef();
   }
 }

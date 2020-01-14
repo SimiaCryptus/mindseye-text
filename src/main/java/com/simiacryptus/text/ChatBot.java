@@ -19,15 +19,15 @@
 
 package com.simiacryptus.text;
 
-import com.simiacryptus.ref.lang.RefAware;
 import com.simiacryptus.ref.wrappers.RefArrays;
 import com.simiacryptus.ref.wrappers.RefString;
+import com.simiacryptus.ref.wrappers.RefSystem;
 import com.simiacryptus.text.gpt2.GPT2Util;
 import com.simiacryptus.util.test.SysOutInterceptor;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URI;
@@ -39,17 +39,21 @@ import java.util.function.BiFunction;
 
 public class ChatBot {
   protected static final Logger logger = LoggerFactory.getLogger(ChatBot.class);
+  @Nonnull
   private final TextGenerator root;
   private final String characterWhitelist = "a-zA-Z01-9,.'\"\\!\\@\\$\\&\\*\\(\\)\\#\\-\\=\\+/";
   private TextGenerator textGenerator;
   private String wordlist = ""; //"http://www.mit.edu/~ecprice/wordlist.10000";
   private double temperature = 1.0;
   private double minEntropy = 1e-1;
-  private String[] seeds = new String[] { "" };
+  @Nonnull
+  private String[] seeds = new String[]{""};
   private boolean verbose = false;
   private int choicesToLog = 5;
   private int maxLength = 64;
+  @Nonnull
   private String prefix = "";
+  @Nonnull
   private String suffix = "";
 
   public ChatBot() throws URISyntaxException, KeyManagementException, NoSuchAlgorithmException, IOException {
@@ -60,7 +64,7 @@ public class ChatBot {
   public static void main(String[] args) throws Exception {
     PrintStream out = SysOutInterceptor.ORIGINAL_OUT;
     ChatBot chatBot = new ChatBot();
-    Scanner scanner = new Scanner(com.simiacryptus.ref.wrappers.RefSystem.in);
+    Scanner scanner = new Scanner(RefSystem.in);
 
     while (true) {
       try {
@@ -76,7 +80,8 @@ public class ChatBot {
     }
   }
 
-  public String dialog(String nextLine)
+  @Nonnull
+  public String dialog(@Nonnull String nextLine)
       throws URISyntaxException, KeyManagementException, NoSuchAlgorithmException, IOException {
     if (!nextLine.equals(nextLine.trim()))
       return dialog(nextLine.trim());
@@ -129,13 +134,13 @@ public class ChatBot {
     textGenerator = init();
   }
 
-  @NotNull
+  @Nonnull
   protected TextGenerator init()
       throws IOException, NoSuchAlgorithmException, KeyManagementException, URISyntaxException {
     TextGenerator textGenerator = GPT2Util.getTextGenerator(root.copy(), characterWhitelist,
         (null == wordlist || wordlist.isEmpty()) ? null : new URI(wordlist));
-    textGenerator = GPT2Util.getTextGenerator(textGenerator, RefArrays.asList(
-    //            SimpleModel.build(GPT2Util.getCodec_345M(), IOUtils.toString(new URI("http://classics.mit.edu/Aesop/fab.mb.txt"), "UTF-8"))
+    GPT2Util.getTextGenerator(textGenerator, RefArrays.asList(
+        //            SimpleModel.build(GPT2Util.getCodec_345M(), IOUtils.toString(new URI("http://classics.mit.edu/Aesop/fab.mb.txt"), "UTF-8"))
     ), seeds);
     textGenerator.setVerbose(verbose);
     textGenerator.setChoicesToLog(choicesToLog);
@@ -145,6 +150,7 @@ public class ChatBot {
     textGenerator.getModel().setFilterFn((s, s2) -> {
       if (s.endsWith("\n") && s2.startsWith("\n"))
         return false;
+      assert filterFn != null;
       return filterFn.apply(s, s2);
     });
     return textGenerator;

@@ -27,17 +27,16 @@ import com.simiacryptus.mindseye.lang.tensorflow.TFIO;
 import com.simiacryptus.mindseye.layers.java.*;
 import com.simiacryptus.mindseye.network.DAGNode;
 import com.simiacryptus.mindseye.network.PipelineNetwork;
-import com.simiacryptus.ref.lang.RefAware;
 import com.simiacryptus.ref.lang.RefUtil;
 import com.simiacryptus.ref.wrappers.*;
 import com.simiacryptus.text.gpt2.GPT2Codec;
 import com.simiacryptus.text.gpt2.GPT2Model;
 import com.simiacryptus.text.gpt2.GPT2Util;
 import com.simiacryptus.util.JsonUtil;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -47,16 +46,18 @@ public class ClassifyUtil {
 
   protected static final Logger logger = LoggerFactory.getLogger(ClassifyUtil.class);
 
-  @NotNull
+  @Nonnull
   public static Function<String, Future<Tensor>> getLanguageTransform(int threads) {
     ExecutorService pool = Executors.newFixedThreadPool(threads);
     ThreadLocal<GPT2Model> gpt2ModelThreadLocal = new ThreadLocal<GPT2Model>() {
+      @Nonnull
       @Override
       protected GPT2Model initialValue() {
         return GPT2Util.getModel_345M();
       }
     };
     ThreadLocal<GPT2Codec> gpt2CodecThreadLocal = new ThreadLocal<GPT2Codec>() {
+      @Nonnull
       @Override
       protected GPT2Codec initialValue() {
         return GPT2Util.getCodec_345M();
@@ -81,16 +82,17 @@ public class ClassifyUtil {
     });
   }
 
-  public static <K, V, U> RefMap<K, U> mapValues(RefMap<K, V> indexedData, Function<V, U> fn) {
+  public static <K, V, U> RefMap<K, U> mapValues(@Nonnull RefMap<K, V> indexedData, @Nonnull Function<V, U> fn) {
     return indexedData.entrySet().stream().collect(RefCollectors.toMap(e -> e.getKey(), e -> fn.apply(e.getValue())));
   }
 
-  @NotNull
+  @Nonnull
   public static Tuple2<PipelineNetwork, SerializableFunction<Tensor, Tensor>> buildClassifier(
-      RefMap<? extends Integer, ? extends RefCollection<? extends Tensor>> collect) {
+      @Nonnull RefMap<? extends Integer, ? extends RefCollection<? extends Tensor>> collect) {
     RefMap<? extends Integer, ? extends TensorStats> statsMap = mapValues(collect, entry -> TensorStats.create(entry));
     statsMap.values().forEach(tensorStats -> {
       logger.debug("Averages Histogram: " + JsonUtil.toJson(getHistogramList(tensorStats.avg.getData(), 10, 10)));
+      assert tensorStats.scale != null;
       logger.debug("Scales Histogram: " + JsonUtil.toJson(getHistogramList(tensorStats.scale.getData(), 10, 10)));
     });
     int primaryKey = 0;
@@ -108,8 +110,8 @@ public class ClassifyUtil {
     }
   }
 
-  @NotNull
-  public static PipelineNetwork buildClassifierFromStats(RefMap<? extends Integer, ? extends TensorStats> statsMap) {
+  @Nonnull
+  public static PipelineNetwork buildClassifierFromStats(@Nonnull RefMap<? extends Integer, ? extends TensorStats> statsMap) {
     int[] dimensions = RefUtil.get(statsMap.values().stream().findAny()).avg.getDimensions();
     RefMap<Integer, PipelineNetwork> networks = statsMap.entrySet().stream()
         .collect(RefCollectors.toMap(e -> e.getKey(), entry -> {
@@ -131,23 +133,26 @@ public class ClassifyUtil {
     return classfier;
   }
 
-  public static Coordinate[] mostSignifigantCoords(TensorStats a, TensorStats b, int n) {
+  @Nonnull
+  public static Coordinate[] mostSignifigantCoords(@Nonnull TensorStats a, @Nonnull TensorStats b, int n) {
     return a.avg.coordStream(true).sorted(RefComparator.comparing(c -> {
       double avgA = a.avg.get(c);
       double avgB = b.avg.get(c);
+      assert a.scale != null;
       double stddevA = a.scale.get(c);
+      assert b.scale != null;
       double stddevB = b.scale.get(c);
       return -Math.log(stddevA / stddevB)
           + ((Math.pow(stddevB, 2) + Math.pow(avgB - avgA, 2)) / (2 * Math.pow(stddevA, 2))) - 0.5;
     })).limit(n).toArray(i -> new Coordinate[i]);
   }
 
-  public static RefList<String> getHistogramList(double[] data, int granularity, int base) {
+  public static RefList<String> getHistogramList(@Nonnull double[] data, int granularity, int base) {
     return getHistogram(data, granularity, base).entrySet().stream().sorted(RefComparator.comparing(x -> x.getKey()))
         .map(x -> RefString.format("%s=%s", x.getKey(), x.getValue())).collect(RefCollectors.toList());
   }
 
-  protected static RefMap<Double, Long> getHistogram(double[] data, int granularity, int base) {
+  protected static RefMap<Double, Long> getHistogram(@Nonnull double[] data, int granularity, int base) {
     return RefArrays.stream(data).mapToObj(x -> {
       return Math.exp(Math.log(base) * Math.round(granularity * Math.log(x) / Math.log(base)) / granularity);
     }).collect(RefCollectors.groupingBy(x -> x, RefCollectors.counting()));

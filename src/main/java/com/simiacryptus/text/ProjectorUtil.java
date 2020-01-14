@@ -26,13 +26,13 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.simiacryptus.mindseye.lang.Tensor;
-import com.simiacryptus.ref.lang.RefAware;
 import com.simiacryptus.ref.wrappers.RefArrays;
 import com.simiacryptus.ref.wrappers.RefCollectors;
 import com.simiacryptus.ref.wrappers.RefList;
 import com.simiacryptus.ref.wrappers.RefMap;
 import org.apache.commons.io.FileUtils;
 
+import javax.annotation.Nonnull;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -45,25 +45,25 @@ import java.util.UUID;
 
 public class ProjectorUtil {
 
-  public static void browseProjector(URL configUrl) throws IOException, URISyntaxException {
+  public static void browseProjector(@Nonnull URL configUrl) throws IOException, URISyntaxException {
     //Desktop.getDesktop().browse(configUrl.toURI());
     Desktop.getDesktop().browse(
         new URI("https://projector.tensorflow.org/?config=" + URLEncoder.encode(configUrl.toString(), "UTF-8")));
   }
 
-  public static URL publishProjector(RefMap<String, Tensor> vectors) throws IOException {
+  public static URL publishProjector(@Nonnull RefMap<String, Tensor> vectors) throws IOException {
     AmazonS3 s3 = AmazonS3ClientBuilder.standard().build();
     URL configUrl = publishProjector(vectors, s3);
     s3.shutdown();
     return configUrl;
   }
 
-  public static URL publishProjector(RefMap<String, Tensor> vectors, AmazonS3 s3) throws IOException {
+  public static URL publishProjector(@Nonnull RefMap<String, Tensor> vectors, @Nonnull AmazonS3 s3) throws IOException {
     String id = UUID.randomUUID().toString();
     return publishProjector(vectors, s3, id);
   }
 
-  public static URL publishProjector(RefMap<String, Tensor> vectors, AmazonS3 s3, String id) throws IOException {
+  public static URL publishProjector(@Nonnull RefMap<String, Tensor> vectors, @Nonnull AmazonS3 s3, @Nonnull String id) throws IOException {
     RefList<Map.Entry<String, Tensor>> entries = vectors.entrySet().stream().collect(RefCollectors.toList());
     int reducedDims = entries.get(0).getValue().getData().length;
 

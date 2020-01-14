@@ -34,17 +34,16 @@ import com.simiacryptus.mindseye.network.PipelineNetwork;
 import com.simiacryptus.mindseye.network.SimpleLossNetwork;
 import com.simiacryptus.mindseye.opt.IterativeTrainer;
 import com.simiacryptus.mindseye.test.NotebookReportBase;
-import com.simiacryptus.ref.lang.RefAware;
 import com.simiacryptus.ref.lang.RefUtil;
 import com.simiacryptus.ref.wrappers.*;
 import com.simiacryptus.text.ClassifyUtil;
 import com.simiacryptus.text.ProjectorUtil;
 import com.simiacryptus.text.TensorStats;
 import org.apache.commons.io.FileUtils;
-import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -58,7 +57,7 @@ import java.util.zip.ZipFile;
 public class TextClassificationDemo extends NotebookReportBase {
 
   public static final File base = new File("C:\\Users\\andre\\Downloads\\twitter-sentiment-analysis2");
-  private final int[] featureDims = { 1, 24, 2, 16, 1, 64 };
+  private final int[] featureDims = {1, 24, 2, 16, 1, 64};
 
   @Nonnull
   @Override
@@ -66,20 +65,22 @@ public class TextClassificationDemo extends NotebookReportBase {
     return ReportType.Applications;
   }
 
+  @Nonnull
   @Override
   protected Class<?> getTargetClass() {
     return GPT2Model.class;
   }
 
-  public static Coordinate[] mostSignifigantClassifierPins(RefList<String[]> rows, int primaryKey, int secondaryKey,
-      int maxDims, int[] featureDims) {
+  @Nonnull
+  public static Coordinate[] mostSignifigantClassifierPins(@Nonnull RefList<String[]> rows, int primaryKey, int secondaryKey,
+                                                           int maxDims, int[] featureDims) {
     RefMap<Integer, RefMap<Integer, Tensor>> indexedData = toTensorMap(rows, featureDims);
     RefMap<Integer, TensorStats> statsMap = ClassifyUtil.mapValues(indexedData,
         entry -> TensorStats.create(entry.values()));
     return ClassifyUtil.mostSignifigantCoords(statsMap.get(primaryKey), statsMap.get(secondaryKey), maxDims);
   }
 
-  public static RefMap<Integer, RefMap<Integer, Tensor>> toTensorMap(RefList<String[]> rows, int[] featureDims) {
+  public static RefMap<Integer, RefMap<Integer, Tensor>> toTensorMap(@Nonnull RefList<String[]> rows, int[] featureDims) {
     return rows.stream().collect(RefCollectors.groupingBy((String[] row) -> {
       return Integer.parseInt(row[0]);
     }, RefCollectors.toMap((String[] row) -> {
@@ -89,14 +90,18 @@ public class TextClassificationDemo extends NotebookReportBase {
     })));
   }
 
-  public static @SuppressWarnings("unused") TextClassificationDemo[] addRefs(TextClassificationDemo[] array) {
+  @Nullable
+  public static @SuppressWarnings("unused")
+  TextClassificationDemo[] addRefs(@Nullable TextClassificationDemo[] array) {
     if (array == null)
       return null;
     return Arrays.stream(array).filter((x) -> x != null).map(TextClassificationDemo::addRef)
         .toArray((x) -> new TextClassificationDemo[x]);
   }
 
-  public static @SuppressWarnings("unused") TextClassificationDemo[][] addRefs(TextClassificationDemo[][] array) {
+  @Nullable
+  public static @SuppressWarnings("unused")
+  TextClassificationDemo[][] addRefs(@Nullable TextClassificationDemo[][] array) {
     if (array == null)
       return null;
     return Arrays.stream(array).filter((x) -> x != null).map(TextClassificationDemo::addRefs)
@@ -127,7 +132,7 @@ public class TextClassificationDemo extends NotebookReportBase {
     File file = new File(base, "train_use.csv");
     RefList<String[]> rows = RefArrays.stream(FileUtils.readFileToString(file, "UTF-8").split("\n"))
         .map(s -> s.split(",", 3)).collect(RefCollectors.toList());
-    @NotNull
+    @Nonnull
     Function<String, Future<Tensor>> languageTransform = ClassifyUtil.getLanguageTransform(1);
     int batchSize = 10;
     for (int startRow = 1 + currentlyIndexed; startRow < rows.size(); startRow += batchSize) {
@@ -147,7 +152,7 @@ public class TextClassificationDemo extends NotebookReportBase {
         FileUtils.write(indexFile, data, "UTF-8", true);
       });
       logger.info("Wrote in " + time.seconds());
-      com.simiacryptus.ref.wrappers.RefSystem.gc();
+      RefSystem.gc();
     }
 
   }
@@ -173,16 +178,16 @@ public class TextClassificationDemo extends NotebookReportBase {
         .buildClassifier(ClassifyUtil.mapValues(indexedData, entry -> new RefArrayList<>(entry.values())));
     PipelineNetwork classfier = tuple2._1;
     RefList<Tensor[]> indexData = rows.stream().map(e -> {
-      return new Tensor[] { new Tensor(2).set(Integer.parseInt(e[0]), 1),
-          tuple2._2.apply(new Tensor(SerialPrecision.Float.parse(e[2]), featureDims)) };
+      return new Tensor[]{new Tensor(2).set(Integer.parseInt(e[0]), 1),
+          tuple2._2.apply(new Tensor(SerialPrecision.Float.parse(e[2]), featureDims))};
     }).collect(RefCollectors.toList());
     classfier.add(pretrain(classfier, indexData));
     classfier.add(new SoftmaxLayer());
     Tensor[][] trainingData = RefIntStream.range(0, indexData.size())
-        .mapToObj(i -> new Tensor[] { indexData.get(i)[1], indexData.get(i)[0] }).toArray(i -> new Tensor[i][]);
+        .mapToObj(i -> new Tensor[]{indexData.get(i)[1], indexData.get(i)[0]}).toArray(i -> new Tensor[i][]);
     double trainingResult = new IterativeTrainer(
         new ArrayTrainable(trainingData, new SimpleLossNetwork(classfier, new EntropyLossLayer()), 1000))
-            .setMaxIterations(100).setTimeout(5, TimeUnit.MINUTES).run();
+        .setMaxIterations(100).setTimeout(5, TimeUnit.MINUTES).run();
     logger.info(RefString.format("Training Result: %s", trainingResult));
     classfier.writeZip(new File(base, "model.zip"));
   }
@@ -195,7 +200,7 @@ public class TextClassificationDemo extends NotebookReportBase {
         .map(s -> s.split(",", 3))
         //.limit(10)
         .collect(RefCollectors.toList());
-    @NotNull
+    @Nonnull
     Function<String, Future<Tensor>> languageTransform = ClassifyUtil.getLanguageTransform(1);
     int batchSize = 10;
     for (int startRow = 1; startRow < rows.size(); startRow += batchSize) {
@@ -207,7 +212,7 @@ public class TextClassificationDemo extends NotebookReportBase {
             Tensor category = new Tensor(2).set(Integer.parseInt(strs[1]), 1);
             Tensor nlpTransform = languageTransform.apply(strs[2]).get();
             Tensor prediction = classifier.eval(nlpTransform).getData().get(0);
-            return new Tensor[] { category, nlpTransform, prediction };
+            return new Tensor[]{category, nlpTransform, prediction};
           } catch (Throwable e) {
             throw new RuntimeException(e);
           }
@@ -227,26 +232,30 @@ public class TextClassificationDemo extends NotebookReportBase {
       });
       logger.info(RefString.format("Processed rows %s-%s in %s: %s", startRow, startRow + subList.size(),
           time.seconds(), time.result));
-      com.simiacryptus.ref.wrappers.RefSystem.gc();
+      RefSystem.gc();
     }
   }
 
-  public @SuppressWarnings("unused") void _free() {
+  public @SuppressWarnings("unused")
+  void _free() {
   }
 
-  public @Override @SuppressWarnings("unused") TextClassificationDemo addRef() {
+  @Nonnull
+  public @Override
+  @SuppressWarnings("unused")
+  TextClassificationDemo addRef() {
     return (TextClassificationDemo) super.addRef();
   }
 
-  @NotNull
-  protected LinearActivationLayer pretrain(PipelineNetwork classfier, RefList<Tensor[]> indexData) {
+  @Nonnull
+  protected LinearActivationLayer pretrain(@Nonnull PipelineNetwork classfier, @Nonnull RefList<Tensor[]> indexData) {
     LinearActivationLayer activationLayer = new LinearActivationLayer().setScale(-1e-9).setBias(0);
     RefList<Tensor> preEval = classfier.map(indexData.stream().map(x -> x[1]).collect(RefCollectors.toList()));
     Tensor[][] trainingData = RefIntStream.range(0, indexData.size())
-        .mapToObj(i -> new Tensor[] { preEval.get(i), indexData.get(i)[0] }).toArray(i -> new Tensor[i][]);
+        .mapToObj(i -> new Tensor[]{preEval.get(i), indexData.get(i)[0]}).toArray(i -> new Tensor[i][]);
     double trainingResult = new IterativeTrainer(new ArrayTrainable(trainingData, new SimpleLossNetwork(
         PipelineNetwork.build(1, activationLayer.addRef(), new SoftmaxLayer()), new EntropyLossLayer())))
-            .setMaxIterations(100).setTimeout(5, TimeUnit.MINUTES).run();
+        .setMaxIterations(100).setTimeout(5, TimeUnit.MINUTES).run();
     logger.info(RefString.format("Training Result: %s", trainingResult));
     return activationLayer;
   }
