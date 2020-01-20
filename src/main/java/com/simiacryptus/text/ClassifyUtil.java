@@ -74,11 +74,13 @@ public class ClassifyUtil {
       }).toArray();
       Tensor state = TFIO.getTensor(copy.state());
       int slice = state.getDimensions()[4] - 1;
-      return new Tensor(1, 24, 2, 16, 1, 64).setByCoord(c -> {
-        int[] coords = c.getCoords();
-        coords[4] = slice;
-        return state.get(coords);
-      });
+      Tensor tensor = new Tensor(1, 24, 2, 16, 1, 64);
+      tensor.setByCoord(c -> {
+          int[] coords = c.getCoords();
+          coords[4] = slice;
+          return state.get(coords);
+        });
+      return tensor.addRef();
     });
   }
 
@@ -120,9 +122,13 @@ public class ClassifyUtil {
           net.add(new ProductInputsLayer(),
               net.add(tensorStats.biasLayer, net.add(new AssertDimensionsLayer(dimensions), net.getInput(0))),
               net.constValue(tensorStats.scale));
-          net.add(new NthPowerActivationLayer().setPower(2));
+          NthPowerActivationLayer nthPowerActivationLayer1 = new NthPowerActivationLayer();
+          nthPowerActivationLayer1.setPower(2);
+          net.add(nthPowerActivationLayer1.addRef());
           net.add(new SumReducerLayer());
-          net.add(new NthPowerActivationLayer().setPower(0.5));
+          NthPowerActivationLayer nthPowerActivationLayer = new NthPowerActivationLayer();
+          nthPowerActivationLayer.setPower(0.5);
+          net.add(nthPowerActivationLayer.addRef());
           return net;
         }));
 

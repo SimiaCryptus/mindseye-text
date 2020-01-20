@@ -102,10 +102,7 @@ public class TextClassificationDemo extends NotebookReportBase {
   @Nullable
   public static @SuppressWarnings("unused")
   TextClassificationDemo[][] addRefs(@Nullable TextClassificationDemo[][] array) {
-    if (array == null)
-      return null;
-    return Arrays.stream(array).filter((x) -> x != null).map(TextClassificationDemo::addRefs)
-        .toArray((x) -> new TextClassificationDemo[x][]);
+    return RefUtil.addRefs(array);
   }
 
   @Test
@@ -154,16 +151,14 @@ public class TextClassificationDemo extends NotebookReportBase {
       logger.info("Wrote in " + time.seconds());
       RefSystem.gc();
     }
-
   }
 
   @Test
   public void projector() throws IOException, URISyntaxException {
     RefList<String[]> rows = loadIndexFile();
 
-    Function<Tensor, Tensor> tensorFunction;
     Coordinate[] coords = mostSignifigantClassifierPins(rows, 0, 1, 100, featureDims);
-    tensorFunction = Tensor.select(coords);
+    Function<Tensor, Tensor> tensorFunction = Tensor.select(coords);
 
     RefMap<String, Tensor> tensorMap = rows.stream().collect(RefCollectors.toMap(r -> r[3],
         r -> tensorFunction.apply(new Tensor(SerialPrecision.Float.parse(r[2]), featureDims))));
@@ -178,16 +173,21 @@ public class TextClassificationDemo extends NotebookReportBase {
         .buildClassifier(ClassifyUtil.mapValues(indexedData, entry -> new RefArrayList<>(entry.values())));
     PipelineNetwork classfier = tuple2._1;
     RefList<Tensor[]> indexData = rows.stream().map(e -> {
-      return new Tensor[]{new Tensor(2).set(Integer.parseInt(e[0]), 1),
+      Tensor tensor = new Tensor(2);
+      tensor.set(Integer.parseInt(e[0]), 1);
+      return new Tensor[]{tensor.addRef(),
           tuple2._2.apply(new Tensor(SerialPrecision.Float.parse(e[2]), featureDims))};
     }).collect(RefCollectors.toList());
     classfier.add(pretrain(classfier, indexData));
     classfier.add(new SoftmaxLayer());
     Tensor[][] trainingData = RefIntStream.range(0, indexData.size())
         .mapToObj(i -> new Tensor[]{indexData.get(i)[1], indexData.get(i)[0]}).toArray(i -> new Tensor[i][]);
-    double trainingResult = new IterativeTrainer(
-        new ArrayTrainable(trainingData, new SimpleLossNetwork(classfier, new EntropyLossLayer()), 1000))
-        .setMaxIterations(100).setTimeout(5, TimeUnit.MINUTES).run();
+    IterativeTrainer iterativeTrainer = new IterativeTrainer(
+        new ArrayTrainable(trainingData, new SimpleLossNetwork(classfier, new EntropyLossLayer()), 1000));
+    iterativeTrainer.setMaxIterations(100);
+    IterativeTrainer iterativeTrainer1 = iterativeTrainer.addRef();
+    iterativeTrainer1.setTimeout(5, TimeUnit.MINUTES);
+    double trainingResult = iterativeTrainer1.addRef().run();
     logger.info(RefString.format("Training Result: %s", trainingResult));
     classfier.writeZip(new File(base, "model.zip"));
   }
@@ -209,7 +209,9 @@ public class TextClassificationDemo extends NotebookReportBase {
       TimedResult<String> time = TimedResult.time(() -> {
         Tensor[][] evalData = subList.stream().map((String[] strs) -> {
           try {
-            Tensor category = new Tensor(2).set(Integer.parseInt(strs[1]), 1);
+            Tensor tensor = new Tensor(2);
+            tensor.set(Integer.parseInt(strs[1]), 1);
+            Tensor category = tensor.addRef();
             Tensor nlpTransform = languageTransform.apply(strs[2]).get();
             Tensor prediction = classifier.eval(nlpTransform).getData().get(0);
             return new Tensor[]{category, nlpTransform, prediction};
@@ -231,7 +233,7 @@ public class TextClassificationDemo extends NotebookReportBase {
         return RefString.format("accuracy=%s; entropy=%s", accuracy, totalEntropy);
       });
       logger.info(RefString.format("Processed rows %s-%s in %s: %s", startRow, startRow + subList.size(),
-          time.seconds(), time.result));
+          time.seconds(), time.getResult()));
       RefSystem.gc();
     }
   }
@@ -249,13 +251,20 @@ public class TextClassificationDemo extends NotebookReportBase {
 
   @Nonnull
   protected LinearActivationLayer pretrain(@Nonnull PipelineNetwork classfier, @Nonnull RefList<Tensor[]> indexData) {
-    LinearActivationLayer activationLayer = new LinearActivationLayer().setScale(-1e-9).setBias(0);
+    LinearActivationLayer linearActivationLayer1 = new LinearActivationLayer();
+    linearActivationLayer1.setScale(-1e-9);
+    LinearActivationLayer linearActivationLayer = linearActivationLayer1.addRef();
+    linearActivationLayer.setBias(0);
+    LinearActivationLayer activationLayer = linearActivationLayer.addRef();
     RefList<Tensor> preEval = classfier.map(indexData.stream().map(x -> x[1]).collect(RefCollectors.toList()));
     Tensor[][] trainingData = RefIntStream.range(0, indexData.size())
         .mapToObj(i -> new Tensor[]{preEval.get(i), indexData.get(i)[0]}).toArray(i -> new Tensor[i][]);
-    double trainingResult = new IterativeTrainer(new ArrayTrainable(trainingData, new SimpleLossNetwork(
-        PipelineNetwork.build(1, activationLayer.addRef(), new SoftmaxLayer()), new EntropyLossLayer())))
-        .setMaxIterations(100).setTimeout(5, TimeUnit.MINUTES).run();
+    IterativeTrainer iterativeTrainer = new IterativeTrainer(new ArrayTrainable(trainingData, new SimpleLossNetwork(
+        PipelineNetwork.build(1, activationLayer.addRef(), new SoftmaxLayer()), new EntropyLossLayer())));
+    iterativeTrainer.setMaxIterations(100);
+    IterativeTrainer iterativeTrainer1 = iterativeTrainer.addRef();
+    iterativeTrainer1.setTimeout(5, TimeUnit.MINUTES);
+    double trainingResult = iterativeTrainer1.addRef().run();
     logger.info(RefString.format("Training Result: %s", trainingResult));
     return activationLayer;
   }

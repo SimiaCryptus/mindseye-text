@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.Arrays;
 
 public class TensorStats extends ReferenceCountingBase {
   protected static final Logger logger = LoggerFactory.getLogger(TensorStats.class);
@@ -44,28 +43,19 @@ public class TensorStats extends ReferenceCountingBase {
   public static TensorStats create(@Nonnull RefCollection<? extends Tensor> values) {
     TensorStats self = new TensorStats();
     self.avg = TestUtil.avg(values);
-    self.biasLayer = new BiasLayer(self.avg.getDimensions()).set(self.avg.scaleInPlace(-1));
+    self.avg.scaleInPlace(-1);
+    BiasLayer biasLayer1 = new BiasLayer(self.avg.getDimensions());
+    biasLayer1.set(self.avg.addRef());
+    self.biasLayer = biasLayer1.addRef();
+    NthPowerActivationLayer nthPowerActivationLayer = new NthPowerActivationLayer();
+    nthPowerActivationLayer.setPower(2);
     Tensor scales = TestUtil
-        .sum(PipelineNetwork.build(1, self.biasLayer.addRef(), new NthPowerActivationLayer().setPower(2)).map(values));
-    self.scale = scales.scaleInPlace(1.0 / values.size()).map(v -> Math.pow(v, -0.5));
+        .sum(PipelineNetwork.build(1, self.biasLayer.addRef(), nthPowerActivationLayer.addRef()).map(values));
+    scales.scaleInPlace(1.0 / values.size());
+    self.scale = scales.addRef().map(v -> Math.pow(v, -0.5));
     return self;
   }
 
-  @Nullable
-  public static @SuppressWarnings("unused")
-  TensorStats[] addRefs(@Nullable TensorStats[] array) {
-    if (array == null)
-      return null;
-    return Arrays.stream(array).filter((x) -> x != null).map(TensorStats::addRef).toArray((x) -> new TensorStats[x]);
-  }
-
-  @Nullable
-  public static @SuppressWarnings("unused")
-  TensorStats[][] addRefs(@Nullable TensorStats[][] array) {
-    if (array == null)
-      return null;
-    return Arrays.stream(array).filter((x) -> x != null).map(TensorStats::addRefs).toArray((x) -> new TensorStats[x][]);
-  }
 
   public @SuppressWarnings("unused")
   void _free() {

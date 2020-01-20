@@ -120,7 +120,6 @@ public class ChatBot {
           textGenerator = init();
           return RefString.format("maxLength=%s; AI State Reset", wordlist);
         }
-
     }
     if (!nextLine.isEmpty()) {
       textGenerator.feed(prefix + nextLine + suffix);

@@ -20,6 +20,7 @@
 package com.simiacryptus.text.gpt2;
 
 import com.simiacryptus.mindseye.test.NotebookReportBase;
+import com.simiacryptus.ref.lang.RefUtil;
 import com.simiacryptus.ref.wrappers.RefArrays;
 import com.simiacryptus.ref.wrappers.RefIntStream;
 import com.simiacryptus.ref.wrappers.RefString;
@@ -84,10 +85,7 @@ public class TextGenerationDemo extends NotebookReportBase {
   @Nullable
   public static @SuppressWarnings("unused")
   TextGenerationDemo[][] addRefs(@Nullable TextGenerationDemo[][] array) {
-    if (array == null)
-      return null;
-    return Arrays.stream(array).filter((x) -> x != null).map(TextGenerationDemo::addRefs)
-        .toArray((x) -> new TextGenerationDemo[x][]);
+    return RefUtil.addRefs(array);
   }
 
   @Test
