@@ -73,21 +73,6 @@ public class TextGenerationDemo extends NotebookReportBase {
     return GPT2Model.class;
   }
 
-  @Nullable
-  public static @SuppressWarnings("unused")
-  TextGenerationDemo[] addRefs(@Nullable TextGenerationDemo[] array) {
-    if (array == null)
-      return null;
-    return Arrays.stream(array).filter((x) -> x != null).map(TextGenerationDemo::addRef)
-        .toArray((x) -> new TextGenerationDemo[x]);
-  }
-
-  @Nullable
-  public static @SuppressWarnings("unused")
-  TextGenerationDemo[][] addRefs(@Nullable TextGenerationDemo[][] array) {
-    return RefUtil.addRefs(array);
-  }
-
   @Test
   public void generateUnconditionalText() {
     run(log -> {
@@ -122,7 +107,7 @@ public class TextGenerationDemo extends NotebookReportBase {
           log.p(headline + " "
               + RefIntStream.range(0, 15)
               .mapToObj(j -> copy.generate(s -> s.length() < 32
-                  || (s.length() < 500 && !s.endsWith(".") && !s.contains(". ") && !s.contains("\n"))))
+                  || s.length() < 500 && !s.endsWith(".") && !s.contains(". ") && !s.contains("\n")))
               .map(x -> x.replace('\n', ' ').trim()).reduce((a, b) -> a + " " + b).orElse(""));
         } catch (Throwable e) {
           logger.warn("Err", e);
@@ -152,7 +137,7 @@ public class TextGenerationDemo extends NotebookReportBase {
         log.p(headline + " "
             + RefIntStream.range(0, 15)
             .mapToObj(j -> copy.generate(s -> s.length() < 32
-                || (s.length() < 500 && !s.endsWith(".") && !s.contains(". ") && !s.contains("\n"))))
+                || s.length() < 500 && !s.endsWith(".") && !s.contains(". ") && !s.contains("\n")))
             .map(x -> x.replace('\n', ' ').trim()).reduce((a, b) -> a + " " + b).orElse(""));
       }
     });
@@ -214,7 +199,7 @@ public class TextGenerationDemo extends NotebookReportBase {
           for (int i = 0; i < 5; i++) {
             TextGenerator copy = textGenerator.copy();
             copy.feed("        // ");
-            String generate = copy.generate(s -> s.length() < 8 || (!s.endsWith("\n") && s.length() < 128));
+            String generate = copy.generate(s -> s.length() < 8 || !s.endsWith("\n") && s.length() < 128);
             copy.getModel().clear();
             log.p(generate);
           }
@@ -226,14 +211,4 @@ public class TextGenerationDemo extends NotebookReportBase {
     });
   }
 
-  public @SuppressWarnings("unused")
-  void _free() {
-  }
-
-  @Nonnull
-  public @Override
-  @SuppressWarnings("unused")
-  TextGenerationDemo addRef() {
-    return (TextGenerationDemo) super.addRef();
-  }
 }

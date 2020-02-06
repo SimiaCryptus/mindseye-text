@@ -116,7 +116,7 @@ public class ChatBot {
           textGenerator = init();
           return RefString.format("maxLength=%s; AI State Reset", maxLength);
         } else if (split[0].toLowerCase().startsWith("wordlist")) {
-          wordlist = (split[1]);
+          wordlist = split[1];
           textGenerator = init();
           return RefString.format("maxLength=%s; AI State Reset", wordlist);
         }
@@ -137,7 +137,7 @@ public class ChatBot {
   protected TextGenerator init()
       throws IOException, NoSuchAlgorithmException, KeyManagementException, URISyntaxException {
     TextGenerator textGenerator = GPT2Util.getTextGenerator(root.copy(), characterWhitelist,
-        (null == wordlist || wordlist.isEmpty()) ? null : new URI(wordlist));
+        null == wordlist || wordlist.isEmpty() ? null : new URI(wordlist));
     GPT2Util.getTextGenerator(textGenerator, RefArrays.asList(
         //            SimpleModel.build(GPT2Util.getCodec_345M(), IOUtils.toString(new URI("http://classics.mit.edu/Aesop/fab.mb.txt"), "UTF-8"))
     ), seeds);

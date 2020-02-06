@@ -76,10 +76,10 @@ public class ClassifyUtil {
       int slice = state.getDimensions()[4] - 1;
       Tensor tensor = new Tensor(1, 24, 2, 16, 1, 64);
       tensor.setByCoord(c -> {
-          int[] coords = c.getCoords();
-          coords[4] = slice;
-          return state.get(coords);
-        });
+        int[] coords = c.getCoords();
+        coords[4] = slice;
+        return state.get(coords);
+      });
       return tensor.addRef();
     });
   }
@@ -141,21 +141,24 @@ public class ClassifyUtil {
 
   @Nonnull
   public static Coordinate[] mostSignifigantCoords(@Nonnull TensorStats a, @Nonnull TensorStats b, int n) {
-    return a.avg.coordStream(true).sorted(RefComparator.comparing(c -> {
-      double avgA = a.avg.get(c);
-      double avgB = b.avg.get(c);
-      assert a.scale != null;
-      double stddevA = a.scale.get(c);
-      assert b.scale != null;
-      double stddevB = b.scale.get(c);
-      return -Math.log(stddevA / stddevB)
-          + ((Math.pow(stddevB, 2) + Math.pow(avgB - avgA, 2)) / (2 * Math.pow(stddevA, 2))) - 0.5;
-    })).limit(n).toArray(i -> new Coordinate[i]);
+    return a.avg.coordStream(true)
+        .sorted(RefComparator.comparingDouble(c -> {
+          double avgA = a.avg.get(c);
+          double avgB = b.avg.get(c);
+          assert a.scale != null;
+          double stddevA = a.scale.get(c);
+          assert b.scale != null;
+          double stddevB = b.scale.get(c);
+          return -Math.log(stddevA / stddevB)
+              + (Math.pow(stddevB, 2) + Math.pow(avgB - avgA, 2)) / (2 * Math.pow(stddevA, 2)) - 0.5;
+        })).limit(n).toArray(i -> new Coordinate[i]);
   }
 
   public static RefList<String> getHistogramList(@Nonnull double[] data, int granularity, int base) {
-    return getHistogram(data, granularity, base).entrySet().stream().sorted(RefComparator.comparing(x -> x.getKey()))
-        .map(x -> RefString.format("%s=%s", x.getKey(), x.getValue())).collect(RefCollectors.toList());
+    return getHistogram(data, granularity, base).entrySet().stream()
+        .sorted(RefComparator.comparingDouble(x -> x.getKey()))
+        .map(x -> RefString.format("%s=%s", x.getKey(), x.getValue()))
+        .collect(RefCollectors.toList());
   }
 
   protected static RefMap<Double, Long> getHistogram(@Nonnull double[] data, int granularity, int base) {

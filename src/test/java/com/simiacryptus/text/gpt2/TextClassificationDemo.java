@@ -90,21 +90,6 @@ public class TextClassificationDemo extends NotebookReportBase {
     })));
   }
 
-  @Nullable
-  public static @SuppressWarnings("unused")
-  TextClassificationDemo[] addRefs(@Nullable TextClassificationDemo[] array) {
-    if (array == null)
-      return null;
-    return Arrays.stream(array).filter((x) -> x != null).map(TextClassificationDemo::addRef)
-        .toArray((x) -> new TextClassificationDemo[x]);
-  }
-
-  @Nullable
-  public static @SuppressWarnings("unused")
-  TextClassificationDemo[][] addRefs(@Nullable TextClassificationDemo[][] array) {
-    return RefUtil.addRefs(array);
-  }
-
   @Test
   public void splitTrainingData() throws IOException {
     List<String> sourceLines = FileUtils.readLines(new File(base, "train.csv"), "UTF-8");
@@ -227,7 +212,9 @@ public class TextClassificationDemo extends NotebookReportBase {
         double accuracy = RefArrays.stream(evalData).mapToDouble(row -> {
           Tensor prediction = row[2];
           Tensor category = row[0];
-          int index = RefUtil.get(prediction.coordStream(false).sorted(RefComparator.comparing(c -> -prediction.get(c))).findFirst()).getIndex();
+          int index = RefUtil.get(prediction.coordStream(false)
+              .sorted(RefComparator.comparingDouble(c -> -prediction.get(c)))
+              .findFirst()).getIndex();
           return category.get(index);
         }).average().getAsDouble();
         return RefString.format("accuracy=%s; entropy=%s", accuracy, totalEntropy);
@@ -236,17 +223,6 @@ public class TextClassificationDemo extends NotebookReportBase {
           time.seconds(), time.getResult()));
       RefSystem.gc();
     }
-  }
-
-  public @SuppressWarnings("unused")
-  void _free() {
-  }
-
-  @Nonnull
-  public @Override
-  @SuppressWarnings("unused")
-  TextClassificationDemo addRef() {
-    return (TextClassificationDemo) super.addRef();
   }
 
   @Nonnull
