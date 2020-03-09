@@ -93,9 +93,9 @@ public class ClassifyUtil {
       @Nonnull RefMap<? extends Integer, ? extends RefCollection<? extends Tensor>> collect) {
     RefMap<? extends Integer, ? extends TensorStats> statsMap = mapValues(collect, entry -> TensorStats.create(entry));
     statsMap.values().forEach(tensorStats -> {
-      logger.debug("Averages Histogram: " + JsonUtil.toJson(getHistogramList(tensorStats.avg.getData(), 10, 10)));
+      logger.debug("Averages Histogram: " + JsonUtil.toJson(getHistogramList(tensorStats.avg.addRef(), 10, 10)));
       assert tensorStats.scale != null;
-      logger.debug("Scales Histogram: " + JsonUtil.toJson(getHistogramList(tensorStats.scale.getData(), 10, 10)));
+      logger.debug("Scales Histogram: " + JsonUtil.toJson(getHistogramList(tensorStats.scale.addRef(), 10, 10)));
     });
     int primaryKey = 0;
     int secondaryKey = 1;
@@ -154,16 +154,18 @@ public class ClassifyUtil {
         })).limit(n).toArray(i -> new Coordinate[i]);
   }
 
-  public static RefList<String> getHistogramList(@Nonnull double[] data, int granularity, int base) {
+  public static RefList<String> getHistogramList(@Nonnull Tensor data, int granularity, int base) {
     return getHistogram(data, granularity, base).entrySet().stream()
         .sorted(RefComparator.comparingDouble(x -> x.getKey()))
         .map(x -> RefString.format("%s=%s", x.getKey(), x.getValue()))
         .collect(RefCollectors.toList());
   }
 
-  protected static RefMap<Double, Long> getHistogram(@Nonnull double[] data, int granularity, int base) {
-    return RefArrays.stream(data).mapToObj(x -> {
+  protected static RefMap<Double, Long> getHistogram(@Nonnull Tensor data, int granularity, int base) {
+    RefMap<Double, Long> collect = data.doubleStream().mapToObj(x -> {
       return Math.exp(Math.log(base) * Math.round(granularity * Math.log(x) / Math.log(base)) / granularity);
     }).collect(RefCollectors.groupingBy(x -> x, RefCollectors.counting()));
+    data.freeRef();
+    return collect;
   }
 }

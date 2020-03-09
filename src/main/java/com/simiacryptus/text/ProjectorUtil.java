@@ -26,7 +26,6 @@ import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.simiacryptus.mindseye.lang.Tensor;
-import com.simiacryptus.ref.wrappers.RefArrays;
 import com.simiacryptus.ref.wrappers.RefCollectors;
 import com.simiacryptus.ref.wrappers.RefList;
 import com.simiacryptus.ref.wrappers.RefMap;
@@ -65,10 +64,10 @@ public class ProjectorUtil {
 
   public static URL publishProjector(@Nonnull RefMap<String, Tensor> vectors, @Nonnull AmazonS3 s3, @Nonnull String id) throws IOException {
     RefList<Map.Entry<String, Tensor>> entries = vectors.entrySet().stream().collect(RefCollectors.toList());
-    int reducedDims = entries.get(0).getValue().getData().length;
+    int reducedDims = entries.get(0).getValue().length();
 
     String tensorsSrc = entries.stream().map(entry -> {
-      return RefArrays.stream(entry.getValue().getData()).mapToObj(x -> {
+      return entry.getValue().doubleStream().mapToObj(x -> {
         return Double.toString(x);
       }).reduce((a, b) -> a + "\t" + b).orElse("");
     }).reduce((a, b) -> a + "\n" + b).orElse("");

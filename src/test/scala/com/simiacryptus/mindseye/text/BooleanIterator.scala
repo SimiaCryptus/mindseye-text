@@ -102,7 +102,7 @@ object BooleanIterator {
   ))
   var precision = Precision.Double
 
-  def indexImages(visionPipeline: => VisionPipeline[VisionPipelineLayer], toIndex: Int, indexResolution: Int, archiveUrl: String)
+  def indexImages(visionPipeline: => VisionPipeline, toIndex: Int, indexResolution: Int, archiveUrl: String)
                  (files: String*)
                  (implicit log: NotebookOutput, sparkSession: SparkSession): DataFrame = {
     val indexed = Try {
@@ -114,12 +114,12 @@ object BooleanIterator {
     else index(visionPipeline, indexResolution, allFiles: _*)
   }
 
-  def index(pipeline: => VisionPipeline[VisionPipelineLayer], imageSize: Int, images: String*)
+  def index(pipeline: => VisionPipeline, imageSize: Int, images: String*)
            (implicit log: NotebookOutput, sparkSession: SparkSession) = {
     val rows = sparkSession.sparkContext.parallelize(images, images.length).flatMap(file => {
-      val layers = pipeline.getLayers
-      val canvas = Tensor.fromRGB(ImageArtUtil.load(log, file, imageSize))
-      val tuples = layers.keys.foldLeft(List(canvas))((input, layer) => {
+      val layers = pipeline.getLayerList
+      val canvas = Tensor.fromRGB(ImageArtUtil.loadImage(log, file, imageSize))
+      val tuples = layers.foldLeft(List(canvas))((input, layer) => {
         val l = layer.getLayer
         val tensors = input ++ List(l.eval(input.last).getData.get(0))
         l.freeRef()
@@ -127,11 +127,11 @@ object BooleanIterator {
       })
       tuples.head.freeRef()
       val reducerLayer = new BandAvgReducerLayer()
-      val rows = (layers.keys.map(_.name()) zip tuples.tail).toMap
+      val rows = (layers.map(_.name()) zip tuples.tail).toMap
         .mapValues(data => {
           val tensor = reducerLayer.eval(data).getData.get(0)
           data.freeRef()
-          val doubles = tensor.getData.clone()
+          val doubles = tensor.copyData()
           tensor.freeRef()
           doubles
         }).map(t => {
