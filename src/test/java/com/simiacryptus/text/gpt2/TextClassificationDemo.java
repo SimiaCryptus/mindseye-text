@@ -40,7 +40,7 @@ import com.simiacryptus.text.ClassifyUtil;
 import com.simiacryptus.text.ProjectorUtil;
 import com.simiacryptus.text.TensorStats;
 import org.apache.commons.io.FileUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.annotation.Nonnull;
 import java.io.File;

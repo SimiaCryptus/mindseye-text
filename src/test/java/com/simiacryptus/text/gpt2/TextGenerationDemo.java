@@ -28,7 +28,7 @@ import com.simiacryptus.text.TemperatureWrapper;
 import com.simiacryptus.text.TextGenerator;
 import org.apache.commons.io.IOUtils;
 import org.jsoup.Jsoup;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
