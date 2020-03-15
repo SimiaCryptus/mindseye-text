@@ -29,6 +29,7 @@ import com.simiacryptus.text.TextGenerator;
 import org.apache.commons.io.IOUtils;
 import org.jsoup.Jsoup;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInfo;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -71,8 +72,8 @@ public class TextGenerationDemo extends NotebookReportBase {
   }
 
   @Test
-  public void generateUnconditionalText() {
-    run(log -> {
+  public void generateUnconditionalText(TestInfo testInfo) {
+    run(testInfo, log -> {
       TextGenerator textGenerator = GPT2Util.get345M().setVerbose(false);
       for (int i = 0; i < 10; i++) {
         log.eval(() -> {
@@ -83,8 +84,8 @@ public class TextGenerationDemo extends NotebookReportBase {
   }
 
   @Test
-  public void writeFables() {
-    run(log -> {
+  public void writeFables(TestInfo testInfo) {
+    run(testInfo, log -> {
       int articles = 100;
       TextGenerator textGenerator = null;
       try {
@@ -114,8 +115,8 @@ public class TextGenerationDemo extends NotebookReportBase {
   }
 
   @Test
-  public void writeFakeNews() {
-    run(log -> {
+  public void writeFakeNews(TestInfo testInfo) {
+    run(testInfo, log -> {
       int articles = 100;
       TextGenerator textGenerator = null;
       try {
@@ -141,7 +142,7 @@ public class TextGenerationDemo extends NotebookReportBase {
   }
 
   @Test
-  public void generateCommentary() throws NoSuchAlgorithmException, IOException, KeyManagementException {
+  public void generateCommentary(TestInfo testInfo) throws NoSuchAlgorithmException, IOException, KeyManagementException {
     TextGenerator textGenerator = GPT2Util.getTextGenerator("",
         //        "a-zA-Z01-9 ,;:\\-\\.\\!\\?",
         null
@@ -154,7 +155,7 @@ public class TextGenerationDemo extends NotebookReportBase {
     String sentancePattern = "([^\\.]{8,}\\.)";
     //    String sentancePattern = "([^\n]{6,}\n)";
     Pattern pattern = Pattern.compile(sentancePattern);
-    run(log -> {
+    run(testInfo, log -> {
       log.h2("Raw Text");
       log.p(text);
       log.h2("Sentence Analysis");
@@ -180,12 +181,12 @@ public class TextGenerationDemo extends NotebookReportBase {
   }
 
   @Test
-  public void generateCodeComments()
+  public void generateCodeComments(TestInfo testInfo)
       throws NoSuchAlgorithmException, IOException, KeyManagementException, URISyntaxException {
     String url = "https://raw.githubusercontent.com/SimiaCryptus/tf-gpt-2/master/src/main/java/com/simiacryptus/text/gpt2/GPT2Model.java";
     TextGenerator textGenerator = GPT2Util.getTextGenerator("a-zA-Z01-9 \\{\\}\\[\\]\\(\\)\\'\\\"\\n\\.\\!\\?",
         new URI("http://www.mit.edu/~ecprice/wordlist.10000"));
-    run(log -> {
+    run(testInfo, log -> {
       try {
         RefArrays.stream(IOUtils.toString(new URI(url), "UTF-8").split("\n")).filter(x -> !x.trim().startsWith("/")
             && !x.trim().startsWith("*") && !x.trim().startsWith("import") && !x.trim().isEmpty()).forEach(line -> {
