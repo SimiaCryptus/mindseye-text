@@ -26,6 +26,7 @@ import com.simiacryptus.ref.wrappers.RefString;
 import com.simiacryptus.text.MinEntropyWrapper;
 import com.simiacryptus.text.TemperatureWrapper;
 import com.simiacryptus.text.TextGenerator;
+import com.simiacryptus.util.Util;
 import org.apache.commons.io.IOUtils;
 import org.jsoup.Jsoup;
 import org.junit.jupiter.api.Test;
@@ -73,7 +74,7 @@ public class TextGenerationDemo extends NotebookReportBase {
 
   @Test
   public void generateUnconditionalText(TestInfo testInfo) {
-    run(testInfo, log -> {
+    report(testInfo, log -> {
       TextGenerator textGenerator = GPT2Util.get345M().setVerbose(false);
       for (int i = 0; i < 10; i++) {
         log.eval(() -> {
@@ -85,14 +86,14 @@ public class TextGenerationDemo extends NotebookReportBase {
 
   @Test
   public void writeFables(TestInfo testInfo) {
-    run(testInfo, log -> {
+    report(testInfo, log -> {
       int articles = 100;
       TextGenerator textGenerator = null;
       try {
         textGenerator = GPT2Util.getTextGenerator(GPT2Util.getTextGenerator("\\w\\s\\.\\;\\,\\'\\\"\\-\\(\\)\\d\\n",
             new URI("http://www.mit.edu/~ecprice/wordlist.10000")), RefArrays.copyOf(seeds_fables, 2));
       } catch (Exception e) {
-        throw new RuntimeException(e);
+        throw Util.throwException(e);
       }
       textGenerator.setModel(new TemperatureWrapper(1.5, textGenerator.getModel()));
       textGenerator.setModel(new MinEntropyWrapper(5e-1, textGenerator.getModel()));
@@ -116,7 +117,7 @@ public class TextGenerationDemo extends NotebookReportBase {
 
   @Test
   public void writeFakeNews(TestInfo testInfo) {
-    run(testInfo, log -> {
+    report(testInfo, log -> {
       int articles = 100;
       TextGenerator textGenerator = null;
       try {
@@ -125,7 +126,7 @@ public class TextGenerationDemo extends NotebookReportBase {
         textGenerator.getModel();
         textGenerator = GPT2Util.getTextGenerator(textGenerator, seeds_headlines);
       } catch (Exception e) {
-        throw new RuntimeException(e);
+        throw Util.throwException(e);
       }
       textGenerator.feed("\n");
       for (int i = 0; i < articles; i++) {
@@ -155,7 +156,7 @@ public class TextGenerationDemo extends NotebookReportBase {
     String sentancePattern = "([^\\.]{8,}\\.)";
     //    String sentancePattern = "([^\n]{6,}\n)";
     Pattern pattern = Pattern.compile(sentancePattern);
-    run(testInfo, log -> {
+    report(testInfo, log -> {
       log.h2("Raw Text");
       log.p(text);
       log.h2("Sentence Analysis");
@@ -186,7 +187,7 @@ public class TextGenerationDemo extends NotebookReportBase {
     String url = "https://raw.githubusercontent.com/SimiaCryptus/tf-gpt-2/master/src/main/java/com/simiacryptus/text/gpt2/GPT2Model.java";
     TextGenerator textGenerator = GPT2Util.getTextGenerator("a-zA-Z01-9 \\{\\}\\[\\]\\(\\)\\'\\\"\\n\\.\\!\\?",
         new URI("http://www.mit.edu/~ecprice/wordlist.10000"));
-    run(testInfo, log -> {
+    report(testInfo, log -> {
       try {
         RefArrays.stream(IOUtils.toString(new URI(url), "UTF-8").split("\n")).filter(x -> !x.trim().startsWith("/")
             && !x.trim().startsWith("*") && !x.trim().startsWith("import") && !x.trim().isEmpty()).forEach(line -> {

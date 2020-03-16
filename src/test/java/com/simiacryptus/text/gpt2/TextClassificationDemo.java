@@ -39,6 +39,7 @@ import com.simiacryptus.ref.wrappers.*;
 import com.simiacryptus.text.ClassifyUtil;
 import com.simiacryptus.text.ProjectorUtil;
 import com.simiacryptus.text.TensorStats;
+import com.simiacryptus.util.Util;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 
@@ -124,7 +125,7 @@ public class TextClassificationDemo extends NotebookReportBase {
             return RefArrays.asList(strs[1], strs[0],
                 SerialPrecision.Float.base64(languageTransform.apply(strs[2]).get()), strs[2]);
           } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw Util.throwException(e);
           }
         }).collect(RefCollectors.toList());
         CharSequence data = dataTable.stream().map(s -> s.stream().reduce((a, b) -> a + "," + b).orElse(""))
@@ -199,7 +200,7 @@ public class TextClassificationDemo extends NotebookReportBase {
             Tensor prediction = classifier.eval(nlpTransform).getData().get(0);
             return new Tensor[]{category, nlpTransform, prediction};
           } catch (Throwable e) {
-            throw new RuntimeException(e);
+            throw Util.throwException(e);
           }
         }).toArray(i -> new Tensor[i][]);
 
