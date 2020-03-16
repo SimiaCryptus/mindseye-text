@@ -20,6 +20,7 @@
 package com.simiacryptus.text.gpt2;
 
 import com.simiacryptus.mindseye.test.NotebookReportBase;
+import com.simiacryptus.notebook.NotebookOutput;
 import com.simiacryptus.ref.wrappers.RefArrays;
 import com.simiacryptus.ref.wrappers.RefIntStream;
 import com.simiacryptus.ref.wrappers.RefString;
@@ -30,7 +31,6 @@ import com.simiacryptus.util.Util;
 import org.apache.commons.io.IOUtils;
 import org.jsoup.Jsoup;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -73,64 +73,32 @@ public class TextGenerationDemo extends NotebookReportBase {
   }
 
   @Test
-  public void generateUnconditionalText(TestInfo testInfo) {
-    report(testInfo, log -> {
-      TextGenerator textGenerator = GPT2Util.get345M().setVerbose(false);
-      for (int i = 0; i < 10; i++) {
-        log.eval(() -> {
-          return textGenerator.generateText(500);
-        });
-      }
-    });
+  public void generateUnconditionalText() {
+    TextGenerator textGenerator = GPT2Util.get345M().setVerbose(false);
+    for (int i = 0; i < 10; i++) {
+      getLog().eval(() -> {
+        return textGenerator.generateText(500);
+      });
+    }
   }
 
   @Test
-  public void writeFables(TestInfo testInfo) {
-    report(testInfo, log -> {
-      int articles = 100;
-      TextGenerator textGenerator = null;
+  public void writeFables() {
+    NotebookOutput log = getLog();
+    int articles = 100;
+    TextGenerator textGenerator = null;
+    try {
+      textGenerator = GPT2Util.getTextGenerator(GPT2Util.getTextGenerator("\\w\\s\\.\\;\\,\\'\\\"\\-\\(\\)\\d\\n",
+          new URI("http://www.mit.edu/~ecprice/wordlist.10000")), RefArrays.copyOf(seeds_fables, 2));
+    } catch (Exception e) {
+      throw Util.throwException(e);
+    }
+    textGenerator.setModel(new TemperatureWrapper(1.5, textGenerator.getModel()));
+    textGenerator.setModel(new MinEntropyWrapper(5e-1, textGenerator.getModel()));
+    textGenerator.feed("\n");
+    for (int i = 0; i < articles; i++) {
+      TextGenerator copy = textGenerator.copy();
       try {
-        textGenerator = GPT2Util.getTextGenerator(GPT2Util.getTextGenerator("\\w\\s\\.\\;\\,\\'\\\"\\-\\(\\)\\d\\n",
-            new URI("http://www.mit.edu/~ecprice/wordlist.10000")), RefArrays.copyOf(seeds_fables, 2));
-      } catch (Exception e) {
-        throw Util.throwException(e);
-      }
-      textGenerator.setModel(new TemperatureWrapper(1.5, textGenerator.getModel()));
-      textGenerator.setModel(new MinEntropyWrapper(5e-1, textGenerator.getModel()));
-      textGenerator.feed("\n");
-      for (int i = 0; i < articles; i++) {
-        TextGenerator copy = textGenerator.copy();
-        try {
-          String headline = copy.generate(s -> s.length() < 10 || !s.endsWith("\n")).replace('\n', ' ').trim();
-          log.h1(headline);
-          log.p(headline + " "
-              + RefIntStream.range(0, 15)
-              .mapToObj(j -> copy.generate(s -> s.length() < 32
-                  || s.length() < 500 && !s.endsWith(".") && !s.contains(". ") && !s.contains("\n")))
-              .map(x -> x.replace('\n', ' ').trim()).reduce((a, b) -> a + " " + b).orElse(""));
-        } catch (Throwable e) {
-          logger.warn("Err", e);
-        }
-      }
-    });
-  }
-
-  @Test
-  public void writeFakeNews(TestInfo testInfo) {
-    report(testInfo, log -> {
-      int articles = 100;
-      TextGenerator textGenerator = null;
-      try {
-        textGenerator = GPT2Util.getTextGenerator("\\w\\s\\.\\;\\,\\'\\\"\\-\\(\\)\\d\\n",
-            new URI("http://www.mit.edu/~ecprice/wordlist.10000"));
-        textGenerator.getModel();
-        textGenerator = GPT2Util.getTextGenerator(textGenerator, seeds_headlines);
-      } catch (Exception e) {
-        throw Util.throwException(e);
-      }
-      textGenerator.feed("\n");
-      for (int i = 0; i < articles; i++) {
-        TextGenerator copy = textGenerator.copy();
         String headline = copy.generate(s -> s.length() < 10 || !s.endsWith("\n")).replace('\n', ' ').trim();
         log.h1(headline);
         log.p(headline + " "
@@ -138,12 +106,40 @@ public class TextGenerationDemo extends NotebookReportBase {
             .mapToObj(j -> copy.generate(s -> s.length() < 32
                 || s.length() < 500 && !s.endsWith(".") && !s.contains(". ") && !s.contains("\n")))
             .map(x -> x.replace('\n', ' ').trim()).reduce((a, b) -> a + " " + b).orElse(""));
+      } catch (Throwable e) {
+        logger.warn("Err", e);
       }
-    });
+    }
   }
 
   @Test
-  public void generateCommentary(TestInfo testInfo) throws NoSuchAlgorithmException, IOException, KeyManagementException {
+  public void writeFakeNews() {
+    NotebookOutput log = getLog();
+    int articles = 100;
+    TextGenerator textGenerator = null;
+    try {
+      textGenerator = GPT2Util.getTextGenerator("\\w\\s\\.\\;\\,\\'\\\"\\-\\(\\)\\d\\n",
+          new URI("http://www.mit.edu/~ecprice/wordlist.10000"));
+      textGenerator.getModel();
+      textGenerator = GPT2Util.getTextGenerator(textGenerator, seeds_headlines);
+    } catch (Exception e) {
+      throw Util.throwException(e);
+    }
+    textGenerator.feed("\n");
+    for (int i = 0; i < articles; i++) {
+      TextGenerator copy = textGenerator.copy();
+      String headline = copy.generate(s -> s.length() < 10 || !s.endsWith("\n")).replace('\n', ' ').trim();
+      log.h1(headline);
+      log.p(headline + " "
+          + RefIntStream.range(0, 15)
+          .mapToObj(j -> copy.generate(s -> s.length() < 32
+              || s.length() < 500 && !s.endsWith(".") && !s.contains(". ") && !s.contains("\n")))
+          .map(x -> x.replace('\n', ' ').trim()).reduce((a, b) -> a + " " + b).orElse(""));
+    }
+  }
+
+  @Test
+  public void generateCommentary() throws NoSuchAlgorithmException, IOException, KeyManagementException {
     TextGenerator textGenerator = GPT2Util.getTextGenerator("",
         //        "a-zA-Z01-9 ,;:\\-\\.\\!\\?",
         null
@@ -156,58 +152,56 @@ public class TextGenerationDemo extends NotebookReportBase {
     String sentancePattern = "([^\\.]{8,}\\.)";
     //    String sentancePattern = "([^\n]{6,}\n)";
     Pattern pattern = Pattern.compile(sentancePattern);
-    report(testInfo, log -> {
-      log.h2("Raw Text");
-      log.p(text);
-      log.h2("Sentence Analysis");
-      Matcher matcher = pattern.matcher(text);
-      try {
-        while (matcher.find()) {
-          String line = matcher.group(1).trim();
-          log.h3(line);
-          double totalEntropy = textGenerator.feed(line);
-          log.p(RefString.format("%.3f bits, %.3f bits per word, %.3f bits per character", totalEntropy,
-              totalEntropy / line.split("\\s+").length, totalEntropy / line.length()));
-          for (int i = 0; i < 5; i++) {
-            TextGenerator copy = textGenerator.copy();
-            String generate = copy.generate(s -> !s.endsWith("."));
-            copy.getModel().clear();
-            log.p(generate);
-          }
+    NotebookOutput log = getLog();
+    log.h2("Raw Text");
+    log.p(text);
+    log.h2("Sentence Analysis");
+    Matcher matcher = pattern.matcher(text);
+    try {
+      while (matcher.find()) {
+        String line = matcher.group(1).trim();
+        log.h3(line);
+        double totalEntropy = textGenerator.feed(line);
+        log.p(RefString.format("%.3f bits, %.3f bits per word, %.3f bits per character", totalEntropy,
+            totalEntropy / line.split("\\s+").length, totalEntropy / line.length()));
+        for (int i = 0; i < 5; i++) {
+          TextGenerator copy = textGenerator.copy();
+          String generate = copy.generate(s -> !s.endsWith("."));
+          copy.getModel().clear();
+          log.p(generate);
         }
-      } catch (Exception e) {
-        logger.warn("Error", e);
       }
-    });
+    } catch (Exception e) {
+      logger.warn("Error", e);
+    }
   }
 
   @Test
-  public void generateCodeComments(TestInfo testInfo)
+  public void generateCodeComments()
       throws NoSuchAlgorithmException, IOException, KeyManagementException, URISyntaxException {
     String url = "https://raw.githubusercontent.com/SimiaCryptus/tf-gpt-2/master/src/main/java/com/simiacryptus/text/gpt2/GPT2Model.java";
     TextGenerator textGenerator = GPT2Util.getTextGenerator("a-zA-Z01-9 \\{\\}\\[\\]\\(\\)\\'\\\"\\n\\.\\!\\?",
         new URI("http://www.mit.edu/~ecprice/wordlist.10000"));
-    report(testInfo, log -> {
-      try {
-        RefArrays.stream(IOUtils.toString(new URI(url), "UTF-8").split("\n")).filter(x -> !x.trim().startsWith("/")
-            && !x.trim().startsWith("*") && !x.trim().startsWith("import") && !x.trim().isEmpty()).forEach(line -> {
-          log.h3(line);
-          double totalEntropy = textGenerator.feed(line);
-          log.p(RefString.format("%.3f bits, %.3f bits per word, %.3f bits per character", totalEntropy,
-              totalEntropy / line.split("\\s+").length, totalEntropy / line.length()));
-          for (int i = 0; i < 5; i++) {
-            TextGenerator copy = textGenerator.copy();
-            copy.feed("        // ");
-            String generate = copy.generate(s -> s.length() < 8 || !s.endsWith("\n") && s.length() < 128);
-            copy.getModel().clear();
-            log.p(generate);
-          }
-          textGenerator.feed("\n");
-        });
-      } catch (Exception e) {
-        logger.warn("Error", e);
-      }
-    });
+    NotebookOutput log = getLog();
+    try {
+      RefArrays.stream(IOUtils.toString(new URI(url), "UTF-8").split("\n")).filter(x -> !x.trim().startsWith("/")
+          && !x.trim().startsWith("*") && !x.trim().startsWith("import") && !x.trim().isEmpty()).forEach(line -> {
+        log.h3(line);
+        double totalEntropy = textGenerator.feed(line);
+        log.p(RefString.format("%.3f bits, %.3f bits per word, %.3f bits per character", totalEntropy,
+            totalEntropy / line.split("\\s+").length, totalEntropy / line.length()));
+        for (int i = 0; i < 5; i++) {
+          TextGenerator copy = textGenerator.copy();
+          copy.feed("        // ");
+          String generate = copy.generate(s -> s.length() < 8 || !s.endsWith("\n") && s.length() < 128);
+          copy.getModel().clear();
+          log.p(generate);
+        }
+        textGenerator.feed("\n");
+      });
+    } catch (Exception e) {
+      logger.warn("Error", e);
+    }
   }
 
 }
