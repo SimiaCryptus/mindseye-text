@@ -64,7 +64,7 @@ public class ChatBot {
   public static void main(String[] args) throws Exception {
     PrintStream out = SysOutInterceptor.ORIGINAL_OUT;
     ChatBot chatBot = new ChatBot();
-    Scanner scanner = new Scanner(RefSystem.in);
+    Scanner scanner = new Scanner(System.in);
 
     while (true) {
       try {
