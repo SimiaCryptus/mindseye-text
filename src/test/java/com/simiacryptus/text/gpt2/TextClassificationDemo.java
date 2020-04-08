@@ -33,13 +33,13 @@ import com.simiacryptus.mindseye.layers.java.SoftmaxLayer;
 import com.simiacryptus.mindseye.network.PipelineNetwork;
 import com.simiacryptus.mindseye.network.SimpleLossNetwork;
 import com.simiacryptus.mindseye.opt.IterativeTrainer;
-import com.simiacryptus.util.test.NotebookReportBase;
 import com.simiacryptus.ref.lang.RefUtil;
 import com.simiacryptus.ref.wrappers.*;
 import com.simiacryptus.text.ClassifyUtil;
 import com.simiacryptus.text.ProjectorUtil;
 import com.simiacryptus.text.TensorStats;
 import com.simiacryptus.util.Util;
+import com.simiacryptus.util.test.NotebookReportBase;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 

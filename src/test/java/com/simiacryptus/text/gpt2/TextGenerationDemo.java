@@ -19,7 +19,6 @@
 
 package com.simiacryptus.text.gpt2;
 
-import com.simiacryptus.util.test.NotebookReportBase;
 import com.simiacryptus.notebook.NotebookOutput;
 import com.simiacryptus.ref.wrappers.RefArrays;
 import com.simiacryptus.ref.wrappers.RefIntStream;
@@ -28,6 +27,7 @@ import com.simiacryptus.text.MinEntropyWrapper;
 import com.simiacryptus.text.TemperatureWrapper;
 import com.simiacryptus.text.TextGenerator;
 import com.simiacryptus.util.Util;
+import com.simiacryptus.util.test.NotebookReportBase;
 import org.apache.commons.io.IOUtils;
 import org.jsoup.Jsoup;
 import org.junit.jupiter.api.Test;
