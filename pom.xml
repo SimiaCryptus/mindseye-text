@@ -30,7 +30,7 @@
 
     <artifactId>mindseye-text</artifactId>
     <description>Text-oriented Neural Network Applications</description>
-    <url>https://simiacryptus.github.io/${github.project}/</url>
+
 
     <properties>
 
