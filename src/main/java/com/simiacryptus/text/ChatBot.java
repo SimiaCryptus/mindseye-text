@@ -23,6 +23,7 @@ import com.simiacryptus.ref.wrappers.RefArrays;
 import com.simiacryptus.ref.wrappers.RefString;
 import com.simiacryptus.text.gpt2.GPT2Util;
 import com.simiacryptus.util.test.SysOutInterceptor;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -138,7 +139,7 @@ public class ChatBot {
     TextGenerator textGenerator = GPT2Util.getTextGenerator(root.copy(), characterWhitelist,
         null == wordlist || wordlist.isEmpty() ? null : new URI(wordlist));
     GPT2Util.getTextGenerator(textGenerator, RefArrays.asList(
-        //            SimpleModel.build(GPT2Util.getCodec_345M(), IOUtils.toString(new URI("http://classics.mit.edu/Aesop/fab.mb.txt"), "UTF-8"))
+        SimpleModel.build(GPT2Util.getCodec_345M(), IOUtils.toString(new URI("http://classics.mit.edu/Aesop/fab.mb.txt"), "UTF-8"))
     ), seeds);
     textGenerator.setVerbose(verbose);
     textGenerator.setChoicesToLog(choicesToLog);
