@@ -27,7 +27,7 @@ import com.simiacryptus.text.MinEntropyWrapper;
 import com.simiacryptus.text.TemperatureWrapper;
 import com.simiacryptus.text.TextGenerator;
 import com.simiacryptus.util.Util;
-import com.simiacryptus.util.test.NotebookReportBase;
+import com.simiacryptus.util.test.NotebookTestBase;
 import org.apache.commons.io.IOUtils;
 import org.jsoup.Jsoup;
 import org.junit.jupiter.api.Test;
@@ -41,7 +41,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class TextGenerationDemo extends NotebookReportBase {
+public class TextGenerationDemo extends NotebookTestBase {
   public static final String[] seeds_quotes = {
       "\"The greatest glory in living lies not in never falling, but in rising every time we fall.\" -Nelson Mandela",
       "\"If life were predictable it would cease to be life, and be without flavor.\" -Eleanor Roosevelt",

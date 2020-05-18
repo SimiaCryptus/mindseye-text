@@ -39,7 +39,7 @@ import com.simiacryptus.text.ClassifyUtil;
 import com.simiacryptus.text.ProjectorUtil;
 import com.simiacryptus.text.TensorStats;
 import com.simiacryptus.util.Util;
-import com.simiacryptus.util.test.NotebookReportBase;
+import com.simiacryptus.util.test.NotebookTestBase;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.Test;
 
@@ -53,7 +53,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.zip.ZipFile;
 
-public class TextClassificationDemo extends NotebookReportBase {
+public class TextClassificationDemo extends NotebookTestBase {
 
   public static final File base = new File("C:\\Users\\andre\\Downloads\\twitter-sentiment-analysis2");
   private final int[] featureDims = {1, 24, 2, 16, 1, 64};

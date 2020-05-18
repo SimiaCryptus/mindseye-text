@@ -27,7 +27,7 @@ import com.simiacryptus.text.MinEntropyWrapper;
 import com.simiacryptus.text.TemperatureWrapper;
 import com.simiacryptus.text.TextGenerator;
 import com.simiacryptus.util.Util;
-import com.simiacryptus.util.test.NotebookReportBase;
+import com.simiacryptus.util.test.NotebookTestBase;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
@@ -35,7 +35,7 @@ import javax.annotation.Nonnull;
 import java.net.URI;
 import java.util.function.Predicate;
 
-public class TextApiDemo extends NotebookReportBase {
+public class TextApiDemo extends NotebookTestBase {
 
   @Nonnull
   @Override
@@ -52,7 +52,7 @@ public class TextApiDemo extends NotebookReportBase {
   @Test
   public void startAPI() {
     final NotebookOutput log = getLog();
-    while(true) {
+    while (true) {
       StringQuery.SimpleStringQuery simpleStringQuery = new StringQuery.SimpleStringQuery(log);
       simpleStringQuery.setValue("\n");
       simpleStringQuery.setSubmitLabel("Go");
