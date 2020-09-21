@@ -1,13 +1,16 @@
+
+!/.mvn/wrapper/maven-wrapper.jar
 # Avoid ignoring Maven wrapper jar file (.jar files are usually ignored)
+*.hprof
+*.log
+*.pb
+*.zip
+.idea/
+.mvn/timing.properties
 buildNumber.properties
 dependency-reduced-pom.xml
 encoder_345M.json
-.idea/
-*.log
 mindseye-text.iml
-.mvn/timing.properties
-!/.mvn/wrapper/maven-wrapper.jar
-*.pb
 pom.xml.next
 pom.xml.releaseBackup
 pom.xml.tag
@@ -15,6 +18,3 @@ pom.xml.versionsBackup
 release.properties
 reports/
 target/
-*.zip
-*.hprof
-
