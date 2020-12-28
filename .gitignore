@@ -4,6 +4,7 @@
 *.hprof
 *.log
 *.pb
+*.pem
 *.zip
 .idea/
 .mvn/timing.properties
