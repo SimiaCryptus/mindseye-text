@@ -149,7 +149,7 @@ object BooleanIterator {
 
 import com.simiacryptus.mindseye.text.BooleanIterator._
 
-abstract class BooleanIterator extends ArtSetup[Object] with BasicOptimizer {
+abstract class BooleanIterator extends ArtSetup[Object, BooleanIterator] with BasicOptimizer {
 
   val positiveSeeds: Array[String] = "".split("\n").toList.toArray
   val negativeSeeds: Array[String] = "".split("\n").toList.toArray
