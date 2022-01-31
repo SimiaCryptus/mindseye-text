@@ -171,7 +171,7 @@ public class TextClassificationDemo extends NotebookTestBase {
     iterativeTrainer.setMaxIterations(100);
     IterativeTrainer iterativeTrainer1 = iterativeTrainer.addRef();
     iterativeTrainer1.setTimeout(5, TimeUnit.MINUTES);
-    double trainingResult = iterativeTrainer1.addRef().run();
+    double trainingResult = iterativeTrainer1.addRef().run().finalValue;
     logger.info(RefString.format("Training Result: %s", trainingResult));
     classfier.writeZip(new File(base, "model.zip"));
   }
@@ -239,7 +239,7 @@ public class TextClassificationDemo extends NotebookTestBase {
     iterativeTrainer.setMaxIterations(100);
     IterativeTrainer iterativeTrainer1 = iterativeTrainer.addRef();
     iterativeTrainer1.setTimeout(5, TimeUnit.MINUTES);
-    double trainingResult = iterativeTrainer1.addRef().run();
+    double trainingResult = iterativeTrainer1.addRef().run().finalValue;
     logger.info(RefString.format("Training Result: %s", trainingResult));
     return activationLayer;
   }
